@@ -135,3 +135,6 @@ class AdminFichas:
 
 
 fichasChess = AdminFichas(ArmyWhite(), ArmyBlack())
+
+
+
