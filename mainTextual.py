@@ -7,7 +7,7 @@ from dataEstructures import Coord
 
 from tablero import Tablero
 from ficha import Ficha, EmptyChess, EntityChees
-from army import  ArmyBlack, ArmyWhite, fichasChess
+from army import  ArmyBlack, ArmyWhite, adminArmys
 from app import ChessGame
 
 
@@ -26,7 +26,7 @@ SIZE_Y: int = 8
 generatorClassWidget = generatorSecuenceClassWhidget()
 
 tablero : Tablero = Tablero((SIZE_Y, SIZE_X))
-game: ChessGame = ChessGame(tablero, fichasChess)
+game: ChessGame = ChessGame(tablero, adminArmys)
 
 
 class Block(Widget):
@@ -35,7 +35,7 @@ class Block(Widget):
     
         self.coord: Coord = coord
         self.ficha: Ficha = game.getFicha(self.coord)
-        self.view: Static = Static(self.ficha.char, classes = self.ficha.clase) 
+        self.view: Static = Static(self.ficha.char, classes = self.ficha.getClase()) 
         self._add_child(self.view) 
 
 
@@ -46,7 +46,7 @@ class Block(Widget):
     def updateFicha(self) -> None:
         self.ficha = game.getFicha(self.coord)
 
-        self.view.set_classes(self.ficha.clase)
+        self.view.set_classes(self.ficha.getClase())
         self.view.update(self.ficha.char)
 
     # Event Click
@@ -59,31 +59,32 @@ class Block(Widget):
 class GroupBlocks(Vertical):
     def __init__(self, children: list[Block], app) -> None:
         super().__init__()
-        self.front = app
-        self.dicBlock: dict[tuple, Block] = {}
-        self.addChildrenBlocks(children)
 
-    # Funcions dicBlock
+        self.front = app
+
+        self.dicBlock: dict[tuple, Block] = {}
+        for block in children:
+            self.dicBlock[block.getCoord()] = block
+            self._add_child(block)
+
+
+    # Funcions UpdateViewBlock
     def updateViewBlock(self, *fichas: EntityChees) -> None:
         for ficha in fichas:
-            self.dicBlock[ficha.getCoord()].updateFicha()
+            self.dicBlock[ficha.getCoord().value].updateFicha()
 
     def updateViewBlocksGlobal(self):
         for block in self.dicBlock.values():
             block.updateFicha()
 
 
-    def addChildrenBlocks(self, children: tuple[Block]) -> None:
-        for block in children:
-            self.dicBlock[block.getCoord()] = block
-            self._add_child(block)
-
+    # Funcions RegisterBlock
     def addRegisterBlock(self, ficha: Ficha) -> None:
-        for key, coord in ficha.register.getData():
+        for coord, key in ficha.getCoordsObjetives():
             self.dicBlock[coord].add_class(key) 
 
     def clearRegisterBlock(self, ficha: Ficha) -> None:
-        for key, coord in ficha.register.getData():
+        for coord, key in ficha.getCoordsObjetives():
             self.dicBlock[coord].remove_class(key) 
 
 
@@ -97,17 +98,17 @@ class GroupBlocks(Vertical):
         match (previousFicha, actualFicha):
 
             case (EmptyChess(), EmptyChess()):
-                pass
+                pass    
 
             case (EmptyChess(), Ficha()):
-                if game.isEqualClassTurno(actualFicha.clase):
+                if game.isEqualClassTurno(actualFicha.getClase()):
                     self.addRegisterBlock(actualFicha)
                     return
 
                 game.setSelectedFicha(EmptyChess())
 
             case (Ficha(), EmptyChess()):
-                if game.inCoordsSelected(actualFicha, "empty"):
+                if previousFicha.coordInObjetivo(actualFicha.getCoord(), "empty"):
                     game.tradeFicha(previousFicha, actualFicha)
                     self.updateViewBlock(previousFicha, actualFicha)
 
@@ -119,7 +120,7 @@ class GroupBlocks(Vertical):
                     game.setSelectedFicha(EmptyChess())
                     return
 
-                if game.inCoordsSelected(actualFicha, "enemy"):
+                if previousFicha.coordInObjetivo(actualFicha.getCoord(), "enemy"):
                     game.fusionFicha(previousFicha, actualFicha, self.front)
                     self.updateViewBlock(previousFicha, actualFicha)
                     game.setSelectedFicha(EmptyChess())
@@ -128,7 +129,7 @@ class GroupBlocks(Vertical):
                     
 
                 else:
-                    if game.isEqualClassTurno(actualFicha.clase):
+                    if game.isEqualClassTurno(actualFicha.getClase()):
                         self.addRegisterBlock(actualFicha)
                         return
                     
@@ -196,6 +197,7 @@ class ChessApp(App):
 
     def updateTurno(self, gameTurno: str):
         turno:str
+        
         if gameTurno == "armyWhite":
             turno = "azules" 
             self.turno.add_class("turno-azul") 
@@ -210,7 +212,7 @@ class ChessApp(App):
 
 
     def saveKillFicha(self, ficha: Ficha):
-        if ficha.clase == "armyBlack":
+        if ficha.getClase() == "armyBlack":
             self.killFichasRojas.mount(Static(ficha.char))
     
         else:

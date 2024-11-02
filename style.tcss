@@ -102,6 +102,10 @@ Block Static{
     border: solid;
 }
 
+.friend{
+    background: blue;
+    border: solid;
+}
 
 
 .armyBlack{

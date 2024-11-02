@@ -2,9 +2,11 @@ from dataEstructures import Coord, Mov, AbstractCoord
 from adminStructures import Movement
 
 
+
+
 class MovFicha(AbstractCoord):
-    def __init__(self, ficha, movY, movX, isSpreadable: bool = False, isOccupiable: bool = True, isOffensive: bool = True):
-        super().__init__(movY, movX)
+    def __init__(self, ficha, mov: tuple, isSpreadable: bool = False, isOccupiable: bool = True, isOffensive: bool = True):
+        super().__init__(mov[0], mov[1])
 
         self.ficha: Ficha = ficha
         self.isSpreadable: bool = isSpreadable
@@ -15,62 +17,75 @@ class MovFicha(AbstractCoord):
 
 
 class EntityChees:
-    
-    def __init__(self, coord: Coord, clase: str) -> None:
-        self.coord: Coord = coord
-        self.clase: str = clase
+    def __init__(self, army) -> None:
+        self.army = army
+        self.scuare: object
         self.char: str
-
-
-        # depredated
-        self.register: AbstractRegister
-
-
-
-        self.pieces_on_prowl: dict[tuple, MovFicha] = {}
-        self.coordsObjetives: dict[tuple, str] = {}
-
-        self.listDirections: list[MovFicha] = []
-
-
-
-    def getCoordsObjetives(self): 
-        return self.coordsObjetives.items()
-
-    def addCoordObjetives(self, coord: str, typeObj: str): ...
         
-    def registerPiecesOnProwl(self, direct: tuple, mov: MovFicha): ...
+        self.listDirections: list[MovFicha] = []
+        self.coordsObjetives: dict[tuple, dict[tuple, str]] 
+        
+
+    
+    
+
+    def coordInObjetivo(self, coord: Coord, type: str) -> bool:
+        for mov in self.coordsObjetives.values():
+            if mov.get(coord.value, "") == type:
+                return True
+
+        return False
+
+    
+    def getClase(self) -> str:
+        return self.army.clase
 
 
+    # scuare funcions
+    def setScuare(self, scuare) -> None:
+        self.scuare = scuare
 
     def getCoord(self) -> Coord:
-        return self.coord.value
-    
-    def setCoord(self, value: Coord) -> None:
-        self.coord = value
+        return self.scuare.coord
+
+    def registerPiecesOnProwl(self ,mov: MovFicha):
+        self.scuare.registerPieceOnProwl(mov)
+
+    def clearInfluence(self, app): ...
+
+    def spreadInfluence(self, app):
+        self.reportPresence(app)
+
+        for direct in self.listDirections:
+            self.registrarObjectives(app, direct)
+
+    def reportPresence(self, app):
+        self.scuare.updateMovOffPieceOnProwl(app)
+
+    # coord objetives funcions
+    def getCoordsObjetives(self) -> list[tuple[tuple, str]]: 
+        result = []
+
+        for mov in self.coordsObjetives.values():
+            result += mov.items()
+
+        return result
 
 
-    # depredated
-    def verifyHacke(self, app): ...
-    
-    def searchObjectives(self, app): ...
+    def addCoordObjetives(self, mov: tuple, coord: tuple, typeObj: str): ...
+        
 
-    def searchGenHacke(self, app): ...
-
-    def search(self, app, callBack) -> None: ...
-
-
-    
 
 
 
 class EmptyChess(EntityChees):
     
-    def __init__(self, coord: Coord = Coord(0, 0), clase: str = "") -> None:
-        super().__init__(coord, clase)
+    def __init__(self):
+        super().__init__(None)
 
         self.char = ""
 
+    def getClase(self) -> str: return ""
 
 
 
@@ -78,46 +93,46 @@ class EmptyChess(EntityChees):
 
 
 class Ficha(EntityChees):
-    def __init__(self, coord: Coord, clase: str) -> None:
-        super().__init__(coord, clase)
-        
-        # depredated
-        self.isDireccional: bool
-        self.listDirecciones: list[Mov]
+    def __init__(self, army):
+        super().__init__(army)
 
 
-    def discoverObjectives(self, app):
-        for direct in self.listDirections:
-            self.registrarObjectives(app, direct)
 
+    def clearInfluence(self, app):
+        for mov in self.coordsObjetives.keys():
+            self.clearInfluenceOffMov(app, mov)
 
-    def addCoordObjetives(self, coord, typeObj):
-        self.coordsObjetives[coord] = typeObj
+    def clearInfluenceOffMov(self, app, mov: tuple):
+        for coord in self.coordsObjetives[mov].keys():
+            app.getScuare(coord).deletedPieceOnProwl(mov)
 
+        self.coordsObjetives[mov].clear()
+    
 
-    def registerPiecesOnProwl(self, direct, mov):
-        self.pieces_on_prowl[direct] = mov
 
         
     def registrarObjectives(self, app, mov: MovFicha):
 
-        def registerRecursive(coord):
+        def registerRecursive(coord: Coord):
             ficha: EntityChees = app.getFicha(coord)
 
             match ficha:
                 case Ficha():
-                    if mov.isOfensive and ficha.clase != self.clase:
-                        self.addCoordObjetives(coord, "enemy")
+                    if mov.isOfensive and ficha.getClase() != self.getClase():
+                        self.addCoordObjetives(mov.value, coord.value, "enemy")
+
+                    else:
+                        self.addCoordObjetives(mov.value, coord.value, "friend")
                     
-                    self.registerPiecesOnProwl(mov.value, mov)
+                    ficha.registerPiecesOnProwl(mov)
                     return
                 
 
                 case EmptyChess():
                     if mov.isOccupiable:
-                        self.addCoordObjetives(coord, "empty")
+                        self.addCoordObjetives(mov.value, coord.value, "empty")
 
-                    self.registerPiecesOnProwl(mov.value, mov)
+                    ficha.registerPiecesOnProwl(mov)
 
                 case None:
                     return
@@ -125,8 +140,11 @@ class Ficha(EntityChees):
             if mov.isSpreadable:
                 registerRecursive(coord + mov)
         
-        registerRecursive(self.coord + mov)
+        registerRecursive(self.getCoord() + mov)
 
+
+    def addCoordObjetives(self, mov, coord, typeObj):
+        self.coordsObjetives[mov][coord] = typeObj
 
 
     def setOrdChar(self, ordChar: int) -> None:
@@ -135,204 +153,125 @@ class Ficha(EntityChees):
 
 
 
-    ###### DEPREDATED
-    def verifyHacke(self, app) -> bool:
-        return self.register.verifyHacke(app)
-
-    def getobjetivesForDirect(self, mov: tuple) -> list[Coord]:
-        if self.isDireccional:
-            return self.register.getDataForDirect(mov)
-        
-        return []
-    
-    def searchGenHacke(self, app):
-        self.search(app, self.registrarGenHacke)
-        
-
-    def registrarGenHacke(self, app, mov: Mov, key: str, coord: Coord) -> None: 
-        if app.PiezaGenHacke.coord == coord or coord in app.PiezaGenHacke.getobjetivesForDirect(app.directGenHacke):
-            self.register.registrarObjetivo(app, mov, key, coord)
-
-    
-    def searchObjectives(self, app):
-        self.search(app, self.register.registrarObjetivo)
-
-
-    def PatronObjetives(
-            self,
-            app,
-            mov: Mov,
-            callBack,
-            nIteration: int = 7,
-            isOnlyMovement: bool = False,
-            isSelected:     bool = True,
-        ) -> None:
-        
-        count: int = 0
-        coordActual: Coord = self.coord 
-        
-        while count != nIteration:
-            coordActual += mov
-            ficha: EntityChees = app.getFicha(coordActual)
-
-            match ficha:
-                case Ficha():
-                    if isOnlyMovement:
-                        break
-
-                    if ficha.clase == self.clase: 
-                        break
-
-                    callBack(app, mov, "enemy", coordActual)
-                    break
-
-
-                case EmptyChess():
-                    if isSelected: 
-                        callBack(app, mov, "empty", coordActual)
-
-                    count += 1
-
-
-                case None:
-                    break
-
-
-
 
 class Rey(Ficha):
     
-    def __init__(self, coord: Coord, clase: str) -> None:
-        super().__init__(coord, clase)
+    def __init__(self, army):
+        super().__init__(army)
 
-        self.isDireccional = False
         self.setOrdChar(9812)
-        self.register = RegisterSimple()
 
-    # Implementar proceso de verificacion de movimientos del rey: 
-    # si el estado del army esta en hacke, solo podra hacer movimientos el rey y la pieza que lo saque del hacke
-    #  -> La manera de saca al rey del hacke es matando a la pieza que genero el hacke o interrumpiendo su direccion al rey
+        self.listDirections = [
+            MovFicha(self, (0, 1)),
+            MovFicha(self, (0, -1)),
+            MovFicha(self, (-1, 0)),
+            MovFicha(self, (1, 0)),
+            MovFicha(self, (-1, -1)),
+            MovFicha(self, (-1, 1)),
+            MovFicha(self, (1, -1)),
+            MovFicha(self, (1, 1)),
+        ]
 
-    # despues de obtener los movimientos del rey y el movimiento de las piezas que lo sacan del hacke, 
-    # se tiene que filtrar los movimientos a los que el rey puede acceder, esta accion lo realiza independiente de hacke
+        self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
-    def search(self, app, callBack) -> None:
-        self.register.clearRegister()
 
-        movs: list[Mov] = Movement.GetListMovs_Total()
-
-        for mov in movs: 
-            self.PatronObjetives(app, mov, callBack , 1)
 
 
 
 class Reina(Ficha):
     
-    def __init__(self, coord: Coord, clase: str) -> None:
-        super().__init__(coord, clase)
+    def __init__(self, army):
+        super().__init__(army)
 
-        self.isDireccional = True
         self.setOrdChar(9813)
 
-        self.listDirecciones = Movement.GetListMovs_Total()
-        self.register = RegisterComplex(self.listDirecciones)
+        self.listDirections = [
+            MovFicha(self, (0, 1), True),
+            MovFicha(self, (0, -1), True),
+            MovFicha(self, (-1, 0), True),
+            MovFicha(self, (1, 0), True),
+            MovFicha(self, (-1, -1), True),
+            MovFicha(self, (-1, 1), True),
+            MovFicha(self, (1, -1), True),
+            MovFicha(self, (1, 1), True),
+        ]
 
-    def search(self, app, callBack) -> None:
-        self.register.clearRegister()
-    
-        for mov in self.listDirecciones: 
-            self.PatronObjetives(app, mov, callBack)
+        self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
 
 
 class Torre(Ficha):
 
-    def __init__(self, coord: Coord, clase: str) -> None:
-        super().__init__(coord, clase)
+    def __init__(self, army):
+        super().__init__(army)
 
-        self.isDireccional = True
+
         self.setOrdChar(9814)
 
-        self.listDirecciones = Movement.GetListMovs_Rect()
-        self.register = RegisterComplex(self.listDirecciones)
+        self.listDirections = [
+            MovFicha(self, (0, 1), True),
+            MovFicha(self, (0, -1), True),
+            MovFicha(self, (-1, 0), True),
+            MovFicha(self, (1, 0), True),
+        ]
 
-    def search(self, app, callBack) -> None:
-        self.register.clearRegister()
-    
-        for mov in self.listDirecciones: 
-            self.PatronObjetives(app, mov, callBack)
-
+        self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
 
 class Alfil(Ficha):
     
-    def __init__(self, coord: Coord, clase: str) -> None:
-        super().__init__(coord, clase)
+    def __init__(self, army):
+        super().__init__(army)
 
-        self.isDireccional = True
         self.setOrdChar(9815)
 
-        self.listDirecciones = Movement.GetListMovs_Diagonal()
-        self.register = RegisterComplex(self.listDirecciones)
+        self.listDirections = [
+            MovFicha(self, (-1, -1), True),
+            MovFicha(self, (-1, 1), True),
+            MovFicha(self, (1, -1), True),
+            MovFicha(self, (1, 1), True),
+        ]
 
-    def search(self, app, callBack) -> None:
-        self.register.clearRegister()
-
-        for mov in self.listDirecciones: 
-            self.PatronObjetives(app, mov, callBack)
+        self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
 
 
 class Caballo(Ficha):
     
-    def __init__(self, coord: Coord, clase: str) -> None:
-        super().__init__(coord, clase)
+    def __init__(self, army):
+        super().__init__(army)
 
-        self.isDireccional = False
         self.setOrdChar(9816)
         
-        self.register = RegisterSimple()
-        
+        self.listDirections = [
+            MovFicha(self, (2, 1)),
+            MovFicha(self, (2, -1)),
+            MovFicha(self, (-1, 2)),
+            MovFicha(self, (1, 2)),
+            MovFicha(self, (-2, -1)),
+            MovFicha(self, (-2, 1)),
+            MovFicha(self, (-1, -2)),
+            MovFicha(self, (1, -2)),
+        ]
 
-    def search(self, app, callBack) -> None:
-        self.register.clearRegister()
-
-        movs: list[Mov] = [
-            Mov(-2, -1), 
-            Mov(-2, 1), 
-            Mov(2, -1), 
-            Mov(2, 1), 
-            Mov(-1, 2), 
-            Mov(1 ,2), 
-            Mov(-1, -2), 
-            Mov(1, -2)
-            ]
-
-        for mov in movs: 
-            self.PatronObjetives(app, mov, callBack, 1)
+        self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
 
 
 class Peon(Ficha):
 
-    def __init__(self, coord: Coord, clase: str, orientacion: int) -> None:
-        super().__init__(coord, clase)
-
-        self.isDireccional = False
+    def __init__(self, army):
+        super().__init__(army)
+        
         self.setOrdChar(9817)
+        self.direct: int = self.army.orientacion
+    
+        self.listDirections = [
+            MovFicha(self, (self.direct, -1), isOccupiable = False),
+            MovFicha(self, (self.direct, 0), isOffensive = False),
+            MovFicha(self, (self.direct, 1), isOccupiable = False),
+        ]
 
-        self.orientacion: int = orientacion
-        self.coordInit: Coord = self.coord.copy()
-        
-        self.register = RegisterSimple()
-        
+        self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
-    def search(self, app, callBack) -> None:
-        self.register.clearRegister()
 
-        iterMov: int = 1 if self.coordInit != self.coord else 2        
-        movL, movF, movR =[Mov(self.orientacion, coordX) for coordX in (-1, 0, 1)]
-        
-        self.PatronObjetives(app, movL, callBack, 1, isSelected= False)
-        self.PatronObjetives(app, movF, callBack, iterMov, isOnlyMovement= True)
-        self.PatronObjetives(app, movR, callBack, 1, isSelected= False)

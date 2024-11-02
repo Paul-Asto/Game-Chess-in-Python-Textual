@@ -4,30 +4,12 @@ from dataEstructures import Coord
 from ficha import Ficha, Torre, Caballo, Alfil, Reina, Rey, Peon
 
 
-# funcions generator Army Fichas
-def getFilePeon(file: int, clase: str, orientacion: int) -> list[Ficha]: 
-    return [Peon(Coord(file, x), clase, orientacion) for x in range(8)]
-
-def getFileFichas(file: int, clase: str) -> list[Ficha]: 
-    return  [
-        Torre(Coord(file, 0), clase),
-        Alfil(Coord(file, 1), clase),
-        Caballo(Coord(file, 2), clase),
-        Reina(Coord(file, 3), clase),
-        Caballo(Coord(file, 5), clase),
-        Alfil(Coord(file, 6), clase),
-        Torre(Coord(file, 7), clase),
-    ]
-
-
-
 class Army:
     def __init__(self) -> None:
         self.inHacke: bool = False
         self.orientacion: int 
         self.clase: str
-        self.fichas: list[Ficha] 
-        self.rey: Ficha
+        self.fichas: dict[tuple, Ficha] = {}
 
 
     def reStartFichas(self): ...
@@ -38,21 +20,14 @@ class Army:
     def setClase(self, clase: str) -> None:
         self.clase = clase
 
-
     def definirOrientacion(self, orientacion: Literal[1, -1]) -> None:
         self.orientacion = orientacion
 
-    def searchObjetives(self, app):
-        self.rey.searchObjectives(app)
-        for ficha in self.fichas:
-            ficha.searchObjectives(app)
+    def initInfluence(self, app):
+        for ficha in self.fichas.values():
+            ficha.spreadInfluence(app)
 
-    def searchGenHacke(self, app):
-        self.rey.searchObjectives(app)
-        for ficha in self.fichas:
-            ficha.searchGenHacke(app)
 
-        app.adminFichas.getArmyForClass(self.clase).setInHacke(False)
 
     
     
@@ -68,8 +43,24 @@ class ArmyBlack(Army):
         self.reStartFichas()
 
     def reStartFichas(self):
-            self.rey = Rey(Coord(0, 4), self.clase)
-            self.fichas = getFilePeon(1, self.clase, self.orientacion) + getFileFichas(0, self.clase)
+            self.fichas = {
+                (0, 0): Peon(self),
+                (0, 1): Peon(self),
+                (0, 2): Peon(self),
+                (0, 3): Peon(self),
+                (0, 4): Peon(self),
+                (0, 5): Peon(self),
+                (0, 6): Peon(self),
+                (0, 7): Peon(self),
+                (1, 0): Torre(self),
+                (1, 1): Caballo(self),
+                (1, 2): Alfil(self),
+                (1, 3): Reina(self),
+                (1, 4): Rey(self),
+                (1, 5): Alfil(self),
+                (1, 6): Caballo(self),
+                (1, 7): Torre(self),
+            }
 
 
 
@@ -83,17 +74,36 @@ class ArmyWhite(Army):
         self.reStartFichas()
 
     def reStartFichas(self):
-            self.rey = Rey(Coord(7, 4), self.clase)
-            self.fichas = getFilePeon(6, self.clase, self.orientacion) + getFileFichas(7, self.clase)
+            self.fichas = {
+                (6, 0): Peon(self),
+                (6, 1): Peon(self),
+                (6, 2): Peon(self),
+                (6, 3): Peon(self),
+                (6, 4): Peon(self),
+                (6, 5): Peon(self),
+                (6, 6): Peon(self),
+                (6, 7): Peon(self),
+                (7, 0): Torre(self),
+                (7, 1): Caballo(self),
+                (7, 2): Alfil(self),
+                (7, 3): Reina(self),
+                (7, 4): Rey(self),
+                (7, 5): Alfil(self),
+                (7, 6): Caballo(self),
+                (7, 7): Torre(self),
+            }
 
 
 
-class AdminFichas:
+
+
+
+class AdminArmys:
     def __init__(self, armyA: Army, armyB: Army) -> None:
         self.claseA = armyA.clase
         self.claseB = armyB.clase
 
-        # Estructura que guarda 2 armys por su clase
+        # Estructura que relaciona Las clases enemigas
         self.relatedEnemy: dict[str, str] = {
             armyA.clase : armyB.clase,
             armyB.clase : armyA.clase
@@ -106,17 +116,15 @@ class AdminFichas:
         }
         
 
-    def getTotalFichas(self) -> list[Ficha]:
-        result: list[Ficha] = []
+    def initInfluence(self, app) -> None:
+        self.armys[self.claseA].initInfluence(app)
+        self.armys[self.claseB].initInfluence(app)
 
-        for army in self.armys.values():
-            result += army.fichas + [army.rey]
+    def getTotalFichas(self) -> list[tuple[tuple, Ficha]]:
+        return \
+        list(self.armys[self.claseA].fichas.items()) + \
+        list(self.armys[self.claseB].fichas.items())
 
-        return result
-
-
-    def getFichasForClass(self, clase: str) -> list[Ficha]:
-        return self.armys[clase].fichas
     
     def getArmyForClass(self, clase: str) -> Army:
         return self.armys[clase]
@@ -125,8 +133,8 @@ class AdminFichas:
         return self.armys[self.getEnemyForClass(clase)]
 
     def reStartArmys(self):
-        for army in self.armys.values():
-            army.reStartFichas()
+        self.armys[self.claseA].reStartFichas()
+        self.armys[self.claseB].reStartFichas()
 
     
     def getEnemyForClass(self, clase: str) -> str:
@@ -134,7 +142,5 @@ class AdminFichas:
 
 
 
-fichasChess = AdminFichas(ArmyWhite(), ArmyBlack())
-
-
+adminArmys = AdminArmys(ArmyWhite(), ArmyBlack())
 

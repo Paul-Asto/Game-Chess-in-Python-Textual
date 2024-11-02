@@ -5,22 +5,55 @@ from army import Army
 from ficha import EmptyChess, EntityChees, Ficha, MovFicha
 
 
+class Scuare:
+
+    def __init__(self, coord: Coord, ficha: EntityChees) -> None:
+        self.coord: Coord = coord
+        self.ficha: EntityChees = ficha
+        self.pieces_on_prowl: dict[tuple, MovFicha] = {}
+
+        self.ficha.setScuare(self)
+
+    def setFicha(self, value: EntityChees) -> None:
+        self.ficha = value
+        self.ficha.setScuare(self)
+
+    def getFicha(self) -> EntityChees:
+        return self.ficha
+    
+    def updateMovOffPieceOnProwl(self, app) -> None:
+        for mov in list(self.pieces_on_prowl.values()).copy():
+            mov.ficha.clearInfluenceOffMov(app, mov.value)
+            mov.ficha.registrarObjectives(app, mov)
+        
+    
+    def registerPieceOnProwl(self, mov: MovFicha):
+        self.pieces_on_prowl[mov.value] = mov
+
+    def deletedPieceOnProwl(self, mov: tuple):
+        self.pieces_on_prowl.pop(mov)
+
+
+
+
 class Tablero:
     def __init__(self, size: tuple) -> None:
         self.size: tuple = size
         self.Y, self.X = size
 
-        self.content: list[EmptyChess] = self.genTableroVoid()
+        self.content: list[list[Scuare]] = self.genTableroVoid()
 
         self.genCoord = self.generatorSequenseCoord()
+
+
 
     def getGenVIew(self) -> Coord:
         return next(self.genCoord)
 
+
     # funcion Generator Content
-    def genTableroVoid(self) -> list[EmptyChess]:
-        return [[EmptyChess(Coord(y, x)) for x in range(self.X)] for y in range(self.Y)]
-    
+    def genTableroVoid(self) -> list[list[Scuare]]:
+        return [[Scuare(Coord(y, x), EmptyChess()) for x in range(self.X)] for y in range(self.Y)]
 
     def clearContent(self):
         self.content = self.genTableroVoid()
@@ -37,21 +70,23 @@ class Tablero:
         return  (self.Y > coord.y >= 0) and (self.X > coord.x >= 0)
     
 
-    def getItem(self, coord: Coord) -> EntityChees | None:
-        return self.content[coord.y][coord.x] if self.isValidCoord(coord) else None
+    def getFicha(self, coord: tuple) -> EntityChees | None:
+        return self.getScuare(coord).getFicha() if self.isValidCoord(coord) else None
     
+
+    def getScuare(self, coord: tuple) -> Scuare:
+        y, x = coord
+        return self.content[y][x]
     
+
     # Funcions Add Fichas
-    def addFicha(self, ficha: Ficha) -> None:
-        y, x = ficha.coord
-        self.content[y][x] = ficha
+    def addFicha(self, ficha: Ficha, coord: tuple) -> None:
+        self.getScuare(coord).setFicha(ficha)
 
-    def addFichas(self, fichas: list[Ficha]) -> None:
-        for ficha in fichas:
-            self.addFicha(ficha)
 
-    def addArmy(self, army: Army) -> None:
-        for ficha in army.fichas:
-            self.addFicha(ficha)
+    def addFichas(self, fichas: list[tuple, Ficha]) -> None:
+        for coord, ficha in fichas:
+            self.addFicha(ficha, coord)
+
 
 
