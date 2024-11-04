@@ -7,15 +7,26 @@ from ficha import Ficha, Torre, Caballo, Alfil, Reina, Rey, Peon
 class Army:
     def __init__(self) -> None:
         self.inHacke: bool = False
+        self.inHackeMate: bool = False
         self.orientacion: int 
         self.clase: str
         self.fichas: dict[tuple, Ficha] = {}
+        self.rey: Rey 
+        self.coordsPriority: list[tuple] 
 
+    def updateRey(self, app):
+        self.rey.spreadInfluence(app)
+
+    def addCoordsPriority(self, coords):
+        self.coordsPriority = coords
 
     def reStartFichas(self): ...
         
     def setInHacke(self, value: bool):
         self.inHacke = value
+    
+    def setInHackeMate(self, value: bool):
+        self.inHackeMate = value
 
     def setClase(self, clase: str) -> None:
         self.clase = clase
@@ -29,10 +40,6 @@ class Army:
 
 
 
-    
-    
-
-
 class ArmyBlack(Army):    
     def __init__(self) -> None:
         super().__init__()
@@ -43,23 +50,27 @@ class ArmyBlack(Army):
         self.reStartFichas()
 
     def reStartFichas(self):
+            self.setInHacke(False)
+            self.setInHackeMate(False)
+
+            self.rey = Rey(self)
             self.fichas = {
-                (0, 0): Peon(self),
-                (0, 1): Peon(self),
-                (0, 2): Peon(self),
-                (0, 3): Peon(self),
-                (0, 4): Peon(self),
-                (0, 5): Peon(self),
-                (0, 6): Peon(self),
-                (0, 7): Peon(self),
-                (1, 0): Torre(self),
-                (1, 1): Caballo(self),
-                (1, 2): Alfil(self),
-                (1, 3): Reina(self),
-                (1, 4): Rey(self),
-                (1, 5): Alfil(self),
-                (1, 6): Caballo(self),
-                (1, 7): Torre(self),
+                (1, 0): Peon(self),
+                (1, 1): Peon(self),
+                (1, 2): Peon(self),
+                (1, 3): Peon(self),
+                (1, 4): Peon(self),
+                (1, 5): Peon(self),
+                (1, 6): Peon(self),
+                (1, 7): Peon(self),
+                (0, 0): Torre(self),
+                (0, 1): Caballo(self),
+                (0, 2): Alfil(self),
+                (0, 3): Reina(self),
+                (0, 4): self.rey,
+                (0, 5): Alfil(self),
+                (0, 6): Caballo(self),
+                (0, 7): Torre(self),
             }
 
 
@@ -74,6 +85,10 @@ class ArmyWhite(Army):
         self.reStartFichas()
 
     def reStartFichas(self):
+            self.setInHacke(False)
+            self.setInHackeMate(False)
+
+            self.rey = Rey(self)     
             self.fichas = {
                 (6, 0): Peon(self),
                 (6, 1): Peon(self),
@@ -87,7 +102,7 @@ class ArmyWhite(Army):
                 (7, 1): Caballo(self),
                 (7, 2): Alfil(self),
                 (7, 3): Reina(self),
-                (7, 4): Rey(self),
+                (7, 4): self.rey,
                 (7, 5): Alfil(self),
                 (7, 6): Caballo(self),
                 (7, 7): Torre(self),
@@ -139,7 +154,6 @@ class AdminArmys:
     
     def getEnemyForClass(self, clase: str) -> str:
         return self.relatedEnemy[clase]
-
 
 
 adminArmys = AdminArmys(ArmyWhite(), ArmyBlack())

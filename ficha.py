@@ -21,25 +21,16 @@ class EntityChees:
         self.army = army
         self.scuare: object
         self.char: str
-        
-        self.listDirections: list[MovFicha] = []
-        self.coordsObjetives: dict[tuple, dict[tuple, str]] 
-        
 
-    
-    
-
-    def coordInObjetivo(self, coord: Coord, type: str) -> bool:
-        for mov in self.coordsObjetives.values():
-            if mov.get(coord.value, "") == type:
-                return True
-
-        return False
-
+    def inHacke(self) -> bool:
+        return self.army.inHacke
     
     def getClase(self) -> str:
         return self.army.clase
 
+    def setOrdChar(self, ordChar: int) -> None:
+        self.ordChar = ordChar
+        self.char = chr(ordChar)
 
     # scuare funcions
     def setScuare(self, scuare) -> None:
@@ -53,33 +44,18 @@ class EntityChees:
 
     def clearInfluence(self, app): ...
 
-    def spreadInfluence(self, app):
-        self.reportPresence(app)
+    def registrarObjectives(self, app, mov: MovFicha): ...
 
-        for direct in self.listDirections:
-            self.registrarObjectives(app, direct)
+    def spreadInfluence(self, app) -> None:
+        self.reportPresence(app)
 
     def reportPresence(self, app):
         self.scuare.updateMovOffPieceOnProwl(app)
-
-    # coord objetives funcions
-    def getCoordsObjetives(self) -> list[tuple[tuple, str]]: 
-        result = []
-
-        for mov in self.coordsObjetives.values():
-            result += mov.items()
-
-        return result
-
-
-    def addCoordObjetives(self, mov: tuple, coord: tuple, typeObj: str): ...
-        
 
 
 
 
 class EmptyChess(EntityChees):
-    
     def __init__(self):
         super().__init__(None)
 
@@ -96,6 +72,8 @@ class Ficha(EntityChees):
     def __init__(self, army):
         super().__init__(army)
 
+        self.listDirections: list[MovFicha] = []
+        self.coordsObjetives: dict[tuple, dict[tuple, str]] 
 
 
     def clearInfluence(self, app):
@@ -108,9 +86,13 @@ class Ficha(EntityChees):
 
         self.coordsObjetives[mov].clear()
     
+    def spreadInfluence(self, app) -> None:
+        super().spreadInfluence(app)
+
+        for direct in self.listDirections:
+            self.registrarObjectives(app, direct)
 
 
-        
     def registrarObjectives(self, app, mov: MovFicha):
 
         def registerRecursive(coord: Coord):
@@ -118,11 +100,11 @@ class Ficha(EntityChees):
 
             match ficha:
                 case Ficha():
-                    if mov.isOfensive and ficha.getClase() != self.getClase():
+                    if mov.isOfensive and (ficha.getClase() != self.getClase()):
                         self.addCoordObjetives(mov.value, coord.value, "enemy")
 
                     else:
-                        self.addCoordObjetives(mov.value, coord.value, "friend")
+                        self.addCoordObjetives(mov.value, coord.value, "invalid")
                     
                     ficha.registerPiecesOnProwl(mov)
                     return
@@ -132,7 +114,12 @@ class Ficha(EntityChees):
                     if mov.isOccupiable:
                         self.addCoordObjetives(mov.value, coord.value, "empty")
 
+                    else:
+                        self.addCoordObjetives(mov.value, coord.value, "invalid")
+
                     ficha.registerPiecesOnProwl(mov)
+
+
 
                 case None:
                     return
@@ -143,13 +130,39 @@ class Ficha(EntityChees):
         registerRecursive(self.getCoord() + mov)
 
 
+    # coord objetives funcions
+    def coordInObjetivo(self, coord: Coord, type: str) -> bool:
+
+        for mov in self.coordsObjetives.values():
+            if mov.get(coord.value, "") == type:
+                if not(self.inHacke()):
+                    return True
+                
+                if coord.value in self.army.coordsPriority:
+                    return True
+                
+                break
+
+        return False
+    
+    def getCoordsObjetives(self) -> list[tuple[tuple, str]]: 
+        result = []
+
+        for mov in self.coordsObjetives.values():
+            if not(self.inHacke()):
+                result += mov.items()
+                continue
+
+            for coord, typeObj in mov.items():
+                if coord in self.army.coordsPriority:
+                    result.append((coord, typeObj))
+
+        return result
+
     def addCoordObjetives(self, mov, coord, typeObj):
         self.coordsObjetives[mov][coord] = typeObj
 
 
-    def setOrdChar(self, ordChar: int) -> None:
-        self.ordChar = ordChar
-        self.char = chr(ordChar)
 
 
 
@@ -175,8 +188,82 @@ class Rey(Ficha):
         self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
 
+    def spreadInfluence(self, app) -> None:
+        super().spreadInfluence(app)
+
+        self.army.setInHacke(False)
 
 
+        # Descartar opciones de coordenadas en amenaza
+        for direct, objetivo in list(self.coordsObjetives.items()).copy():
+            if len(objetivo) == 0:
+                continue
+
+            coord = list(objetivo.keys())[0]
+            scuare = app.getScuare(coord)
+
+            isInvalid = False
+
+            for mov in scuare.pieces_on_prowl.values():
+                if (mov.ficha.getClase() != self.getClase()) and mov.isOfensive:
+                    isInvalid = True
+                    break
+            
+            if isInvalid:
+                self.addCoordObjetives(direct, coord, "invalid")
+
+
+        # Verificar Hacke 
+        for mov in self.scuare.pieces_on_prowl.values():
+            if not(mov.ficha.getClase() != self.getClase()):
+                continue
+
+            self.army.setInHacke(True)
+            self.army.addCoordsPriority([mov.ficha.getCoord().value] + list(mov.ficha.coordsObjetives[mov.value].keys()))
+
+
+            coord = self.getCoord() + mov
+            if mov.isOfensive and mov.isSpreadable and app.tablero.isValidCoord(coord):
+                self.addCoordObjetives(mov.value, coord.value, "invalid")
+            break
+
+        # Verificar Hacke Mate
+        if self.inHacke():
+            result: bool = True
+            coordsDisp: list[tuple[tuple, str]] = []
+
+            for ficha in self.army.fichas.values():
+                coordsDisp += ficha.getCoordsObjetives()
+            
+            for _, tipo in coordsDisp:
+                if tipo != "invalid":
+                    result = False
+                    break
+            
+            if result:
+                self.army.setInHackeMate(True)
+
+
+
+            
+
+
+
+    def coordInObjetivo(self, coord: Coord, type: str) -> bool:
+        for mov in self.coordsObjetives.values():
+            if mov.get(coord.value, "") == type:
+                    return True
+        return False
+    
+
+    def getCoordsObjetives(self) -> list[tuple[tuple, str]]: 
+        result = []
+
+        for mov in self.coordsObjetives.values():       
+            result += mov.items()
+
+        return result
+    
 
 class Reina(Ficha):
     

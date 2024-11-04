@@ -46,10 +46,8 @@ class Tablero:
         self.genCoord = self.generatorSequenseCoord()
 
 
-
     def getGenVIew(self) -> Coord:
         return next(self.genCoord)
-
 
     # funcion Generator Content
     def genTableroVoid(self) -> list[list[Scuare]]:

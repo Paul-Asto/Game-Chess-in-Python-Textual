@@ -56,6 +56,7 @@ class Block(Widget):
 
 
 
+
 class GroupBlocks(Vertical):
     def __init__(self, children: list[Block], app) -> None:
         super().__init__()
@@ -63,6 +64,7 @@ class GroupBlocks(Vertical):
         self.front = app
 
         self.dicBlock: dict[tuple, Block] = {}
+
         for block in children:
             self.dicBlock[block.getCoord()] = block
             self._add_child(block)
@@ -135,6 +137,13 @@ class GroupBlocks(Vertical):
                     
                     game.setSelectedFicha(EmptyChess())
 
+        # Evento de finalizacion del programa
+        if not(isinstance(previousFicha, Ficha)):
+            return
+        
+        if game.enemyInHackeMate(previousFicha.getClase()):
+            self.front.exitProgram()
+            
 
 
 class ChessApp(App):
@@ -228,6 +237,3 @@ class ChessApp(App):
 if __name__ == "__main__":
     app = ChessApp()
     app.run()
-
-
-

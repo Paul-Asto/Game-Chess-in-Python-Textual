@@ -14,10 +14,6 @@ class ChessGame:
         self.previousFicha: EntityChees = EmptyChess()
         self.selectedFicha: EntityChees = EmptyChess()
 
-        # EXPERIMENTAL
-        self.PiezaGenHacke: Ficha
-        self.directGenHacke: tuple
-
         self.Init()
 
     
@@ -40,8 +36,10 @@ class ChessGame:
     def reStartGame(self):
         self.reStartDataFromAtributos()
         self.Init()
-
-
+    
+    def enemyInHackeMate(self, clase):
+        return adminArmys.getEnemyArmyForClass(clase).inHackeMate
+        
 
     def generatorView(self) -> Coord:
         return self.tablero.getGenVIew()
@@ -83,9 +81,6 @@ class ChessGame:
     def getScuare(self, coord: tuple) -> Scuare:
         return self.tablero.getScuare(coord)
     
-    def setFicha(self, value: EntityChees, coord: tuple) -> None:
-            self.tablero.addFicha(value, coord)
-    
     def getFicha(self, coord: Coord) -> EntityChees | None:
         return self.tablero.getFicha(coord)
 
@@ -101,7 +96,8 @@ class ChessGame:
 
         scuareA.ficha.spreadInfluence(self)
         scuareB.ficha.spreadInfluence(self)
-        
+
+        self.adminFichas.getEnemyArmyForClass(ficha_A.getClase()).updateRey(self)
 
 
     def fusionFicha(self, ficha_A: EntityChees, ficha_B: EntityChees, app) -> None:
@@ -117,5 +113,7 @@ class ChessGame:
 
         scuareA.ficha.spreadInfluence(self)
         scuareB.ficha.spreadInfluence(self)
+
+        self.adminFichas.getEnemyArmyForClass(ficha_A.getClase()).updateRey(self)
 
         app.saveKillFicha(ficha_B)
