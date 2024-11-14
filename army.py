@@ -4,6 +4,7 @@ from dataEstructures import Coord
 from ficha import Ficha, Torre, Caballo, Alfil, Reina, Rey, Peon
 
 
+
 class Army:
     def __init__(self) -> None:
         self.inHacke: bool = False
@@ -88,7 +89,7 @@ class ArmyWhite(Army):
             self.setInHacke(False)
             self.setInHackeMate(False)
 
-            self.rey = Rey(self)     
+            self.rey = Rey(self)  
             self.fichas = {
                 (6, 0): Peon(self),
                 (6, 1): Peon(self),
@@ -107,9 +108,6 @@ class ArmyWhite(Army):
                 (7, 6): Caballo(self),
                 (7, 7): Torre(self),
             }
-
-
-
 
 
 
@@ -135,6 +133,7 @@ class AdminArmys:
         self.armys[self.claseA].initInfluence(app)
         self.armys[self.claseB].initInfluence(app)
 
+
     def getTotalFichas(self) -> list[tuple[tuple, Ficha]]:
         return \
         list(self.armys[self.claseA].fichas.items()) + \
@@ -144,8 +143,10 @@ class AdminArmys:
     def getArmyForClass(self, clase: str) -> Army:
         return self.armys[clase]
 
+
     def getEnemyArmyForClass(self, clase: str) -> Army:
         return self.armys[self.getEnemyForClass(clase)]
+
 
     def reStartArmys(self):
         self.armys[self.claseA].reStartFichas()
@@ -157,4 +158,3 @@ class AdminArmys:
 
 
 adminArmys = AdminArmys(ArmyWhite(), ArmyBlack())
-

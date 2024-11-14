@@ -4,7 +4,6 @@ from army import Army, AdminArmys, adminArmys
 from dataEstructures import Coord, Mov
 
 class ChessGame:
-
     def __init__(self, tablero: Tablero, adminFichas: AdminArmys) -> None:
         self.tablero: Tablero = tablero
         self.adminFichas: AdminArmys = adminFichas
@@ -39,7 +38,6 @@ class ChessGame:
     
     def enemyInHackeMate(self, clase):
         return adminArmys.getEnemyArmyForClass(clase).inHackeMate
-        
 
     def generatorView(self) -> Coord:
         return self.tablero.getGenVIew()
@@ -48,7 +46,13 @@ class ChessGame:
     def iteration(self, front)-> None:
         self.updateTurno()
         front.updateTurno(self.turno)
-    
+
+        if not(isinstance(self.previousFicha, Ficha)):
+            return
+        # Evento de finalizacion del programa
+        if self.enemyInHackeMate(self.previousFicha.getClase()):
+            front.exitProgram()
+
 
     # Turno Funcions
     def updateTurno(self) -> None: 
@@ -77,7 +81,6 @@ class ChessGame:
 
 
     # tablero Funcions
-
     def getScuare(self, coord: tuple) -> Scuare:
         return self.tablero.getScuare(coord)
     

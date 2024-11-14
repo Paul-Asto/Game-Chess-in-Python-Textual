@@ -1,4 +1,3 @@
-
 from dataEstructures import Coord
 
 from army import Army

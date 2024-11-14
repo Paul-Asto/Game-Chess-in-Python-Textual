@@ -3,14 +3,13 @@ from adminStructures import Movement
 
 
 
-
-class MovFicha(AbstractCoord):
+class MovFicha(Mov):
     def __init__(self, ficha, mov: tuple, isSpreadable: bool = False, isOccupiable: bool = True, isOffensive: bool = True):
         super().__init__(mov[0], mov[1])
 
         self.ficha: Ficha = ficha
-        self.isSpreadable: bool = isSpreadable
 
+        self.isSpreadable: bool = isSpreadable
         self.isOccupiable: bool = isOccupiable
         self.isOfensive: bool = isOffensive
 
@@ -54,7 +53,6 @@ class EntityChees:
 
 
 
-
 class EmptyChess(EntityChees):
     def __init__(self):
         super().__init__(None)
@@ -65,20 +63,24 @@ class EmptyChess(EntityChees):
 
 
 
-        
-
-
 class Ficha(EntityChees):
     def __init__(self, army):
         super().__init__(army)
+
+        self.defending: bool = False
+        self.listDirectDefending: list[tuple] = []
 
         self.listDirections: list[MovFicha] = []
         self.coordsObjetives: dict[tuple, dict[tuple, str]] 
 
 
+    def setDefending(self, value: bool):
+        self.defending = value
+
     def clearInfluence(self, app):
         for mov in self.coordsObjetives.keys():
             self.clearInfluenceOffMov(app, mov)
+
 
     def clearInfluenceOffMov(self, app, mov: tuple):
         for coord in self.coordsObjetives[mov].keys():
@@ -86,6 +88,7 @@ class Ficha(EntityChees):
 
         self.coordsObjetives[mov].clear()
     
+
     def spreadInfluence(self, app) -> None:
         super().spreadInfluence(app)
 
@@ -94,7 +97,6 @@ class Ficha(EntityChees):
 
 
     def registrarObjectives(self, app, mov: MovFicha):
-
         def registerRecursive(coord: Coord):
             ficha: EntityChees = app.getFicha(coord)
 
@@ -108,7 +110,6 @@ class Ficha(EntityChees):
                     
                     ficha.registerPiecesOnProwl(mov)
                     return
-                
 
                 case EmptyChess():
                     if mov.isOccupiable:
@@ -119,10 +120,8 @@ class Ficha(EntityChees):
 
                     ficha.registerPiecesOnProwl(mov)
 
-
-
                 case None:
-                    return
+                    return 
                 
             if mov.isSpreadable:
                 registerRecursive(coord + mov)
@@ -132,47 +131,62 @@ class Ficha(EntityChees):
 
     # coord objetives funcions
     def coordInObjetivo(self, coord: Coord, type: str) -> bool:
+        if self.inHacke():
+            for mov in self.coordsObjetives.values():
+                if mov.get(coord.value, "") == type:
+                    if coord.value in self.army.coordsPriority:
+                        return True
+                    
+            return False
 
         for mov in self.coordsObjetives.values():
             if mov.get(coord.value, "") == type:
-                if not(self.inHacke()):
-                    return True
-                
-                if coord.value in self.army.coordsPriority:
-                    return True
-                
-                break
-
+                return True   
+                    
         return False
     
+
     def getCoordsObjetives(self) -> list[tuple[tuple, str]]: 
-        result = []
+        result: list = []
+
+        if self.inHacke():
+            for mov in self.coordsObjetives.values():
+                for coord, typeObj in mov.items():
+                    if coord in self.army.coordsPriority:
+                        result.append((coord, typeObj))
+            return result
+        
+        if self.defending:
+            nDirectMax: int = 2
+
+            for direct, mov in self.coordsObjetives.items():
+                if nDirectMax == 0:
+                    break
+
+                if direct in self.listDirectDefending:
+                    result += mov.items()
+                    nDirectMax -= 1
+
+            return result
+                
 
         for mov in self.coordsObjetives.values():
-            if not(self.inHacke()):
-                result += mov.items()
-                continue
-
-            for coord, typeObj in mov.items():
-                if coord in self.army.coordsPriority:
-                    result.append((coord, typeObj))
+            result += mov.items()
 
         return result
+
 
     def addCoordObjetives(self, mov, coord, typeObj):
         self.coordsObjetives[mov][coord] = typeObj
 
 
 
-
-
-
 class Rey(Ficha):
-    
     def __init__(self, army):
         super().__init__(army)
 
         self.setOrdChar(9812)
+        self.listFichaDefender: list[Ficha] = []
 
         self.listDirections = [
             MovFicha(self, (0, 1)),
@@ -187,11 +201,70 @@ class Rey(Ficha):
 
         self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
+    def registrarObjectives(self, app, mov: MovFicha):
+        fichaDefender: Ficha  = None
+        directRegistrado: bool = False
+
+        def registerRecursive(coord: Coord):
+            nonlocal fichaDefender
+            nonlocal directRegistrado
+
+            ficha: EntityChees = app.getFicha(coord)
+
+            match ficha:
+                case Ficha():
+                    if fichaDefender == None:
+                        if (ficha.getClase() != self.getClase()):
+                            if not directRegistrado:
+                                self.addCoordObjetives(mov.value, coord.value, "enemy")
+                                ficha.registerPiecesOnProwl(mov)
+                            return
+
+                        else:
+                            self.addCoordObjetives(mov.value, coord.value, "invalid")
+                            fichaDefender = ficha
+                            ficha.registerPiecesOnProwl(mov)
+
+                    else:
+                        if (ficha.getClase() != self.getClase()):
+                            for movEnemy in ficha.listDirections:
+                                if mov.GetOpuesto().value == movEnemy.value and movEnemy.isSpreadable:
+                                    fichaDefender.setDefending(True)
+                                    self.listFichaDefender.append(fichaDefender)
+                                    fichaDefender.listDirectDefending = [mov.value, movEnemy.value]
+                                    break
+                        return
+                    
+
+                case EmptyChess():
+                    if not directRegistrado:
+                        self.addCoordObjetives(mov.value, coord.value, "empty")
+                        ficha.registerPiecesOnProwl(mov)
+                        
+
+                case None:
+                    return 
+                
+            directRegistrado = True
+                        
+            
+            registerRecursive(coord + mov)
+
+        registerRecursive(self.getCoord() + mov)
+
 
     def spreadInfluence(self, app) -> None:
-        super().spreadInfluence(app)
+        # Cambiar estado de fichas defensivas anteriores
+        for ficha in self.listFichaDefender:
+            ficha.setDefending(False)
+        
+        self.listFichaDefender.clear()
 
+        # Cambiamos el estado hacke anterior
         self.army.setInHacke(False)
+
+
+        super().spreadInfluence(app)
 
 
         # Descartar opciones de coordenadas en amenaza
@@ -211,7 +284,6 @@ class Rey(Ficha):
             
             if isInvalid:
                 self.addCoordObjetives(direct, coord, "invalid")
-
 
         # Verificar Hacke 
         for mov in self.scuare.pieces_on_prowl.values():
@@ -245,10 +317,6 @@ class Rey(Ficha):
 
 
 
-            
-
-
-
     def coordInObjetivo(self, coord: Coord, type: str) -> bool:
         for mov in self.coordsObjetives.values():
             if mov.get(coord.value, "") == type:
@@ -265,8 +333,8 @@ class Rey(Ficha):
         return result
     
 
+
 class Reina(Ficha):
-    
     def __init__(self, army):
         super().__init__(army)
 
@@ -288,10 +356,8 @@ class Reina(Ficha):
 
 
 class Torre(Ficha):
-
     def __init__(self, army):
         super().__init__(army)
-
 
         self.setOrdChar(9814)
 
@@ -305,8 +371,8 @@ class Torre(Ficha):
         self.coordsObjetives = {mov.value : {} for mov in self.listDirections}
 
 
+
 class Alfil(Ficha):
-    
     def __init__(self, army):
         super().__init__(army)
 
@@ -324,7 +390,6 @@ class Alfil(Ficha):
 
 
 class Caballo(Ficha):
-    
     def __init__(self, army):
         super().__init__(army)
 
@@ -346,7 +411,6 @@ class Caballo(Ficha):
 
 
 class Peon(Ficha):
-
     def __init__(self, army):
         super().__init__(army)
         

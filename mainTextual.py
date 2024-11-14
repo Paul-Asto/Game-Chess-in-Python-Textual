@@ -62,7 +62,6 @@ class GroupBlocks(Vertical):
         super().__init__()
 
         self.front = app
-
         self.dicBlock: dict[tuple, Block] = {}
 
         for block in children:
@@ -74,6 +73,7 @@ class GroupBlocks(Vertical):
     def updateViewBlock(self, *fichas: EntityChees) -> None:
         for ficha in fichas:
             self.dicBlock[ficha.getCoord().value].updateFicha()
+
 
     def updateViewBlocksGlobal(self):
         for block in self.dicBlock.values():
@@ -137,12 +137,6 @@ class GroupBlocks(Vertical):
                     
                     game.setSelectedFicha(EmptyChess())
 
-        # Evento de finalizacion del programa
-        if not(isinstance(previousFicha, Ficha)):
-            return
-        
-        if game.enemyInHackeMate(previousFicha.getClase()):
-            self.front.exitProgram()
             
 
 
