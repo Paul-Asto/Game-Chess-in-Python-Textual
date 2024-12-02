@@ -1,160 +1,126 @@
-from typing import Literal
+from copy import deepcopy
+from coord import Coord
 
-from dataEstructures import Coord
-from ficha import Ficha, Torre, Caballo, Alfil, Reina, Rey, Peon
+from rey import Rey
+from piece import PieceChess
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from board import Board
 
 
 
 class Army:
-    def __init__(self) -> None:
-        self.inHacke: bool = False
-        self.inHackeMate: bool = False
-        self.orientacion: int 
-        self.clase: str
-        self.fichas: dict[tuple, Ficha] = {}
-        self.rey: Rey 
-        self.coordsPriority: list[tuple] 
+    __in_hacke: bool = False
+    __in_hacke_mate: bool = False
+    __orientacion: int 
+    __clase: str
 
-    def updateRey(self, app):
-        self.rey.spreadInfluence(app)
+    __rey: Rey 
+    __coords_priority: list[Coord, str] = []
 
-    def addCoordsPriority(self, coords):
-        self.coordsPriority = coords
+    __fichas: dict[Coord, PieceChess]
+    __copy_fichas: dict[Coord, PieceChess] = {}
 
-    def reStartFichas(self): ...
-        
-    def setInHacke(self, value: bool):
-        self.inHacke = value
+
+    # propiedad in_hacke
+    @property
+    def in_hacke(self) -> bool:
+        return self.__in_hacke
     
-    def setInHackeMate(self, value: bool):
-        self.inHackeMate = value
-
-    def setClase(self, clase: str) -> None:
-        self.clase = clase
-
-    def definirOrientacion(self, orientacion: Literal[1, -1]) -> None:
-        self.orientacion = orientacion
-
-    def initInfluence(self, app):
-        for ficha in self.fichas.values():
-            ficha.spreadInfluence(app)
+    @in_hacke.setter
+    def in_hacke(self, value: bool) -> None:
+        self.__in_hacke = value
 
 
-
-class ArmyBlack(Army):    
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.setClase("armyBlack")
-        self.definirOrientacion(1) 
-        
-        self.reStartFichas()
-
-    def reStartFichas(self):
-            self.setInHacke(False)
-            self.setInHackeMate(False)
-
-            self.rey = Rey(self)
-            self.fichas = {
-                (1, 0): Peon(self),
-                (1, 1): Peon(self),
-                (1, 2): Peon(self),
-                (1, 3): Peon(self),
-                (1, 4): Peon(self),
-                (1, 5): Peon(self),
-                (1, 6): Peon(self),
-                (1, 7): Peon(self),
-                (0, 0): Torre(self),
-                (0, 1): Caballo(self),
-                (0, 2): Alfil(self),
-                (0, 3): Reina(self),
-                (0, 4): self.rey,
-                (0, 5): Alfil(self),
-                (0, 6): Caballo(self),
-                (0, 7): Torre(self),
-            }
-
-
-
-class ArmyWhite(Army):
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.setClase("armyWhite")
-        self.definirOrientacion(-1)
-        
-        self.reStartFichas()
-
-    def reStartFichas(self):
-            self.setInHacke(False)
-            self.setInHackeMate(False)
-
-            self.rey = Rey(self)  
-            self.fichas = {
-                (6, 0): Peon(self),
-                (6, 1): Peon(self),
-                (6, 2): Peon(self),
-                (6, 3): Peon(self),
-                (6, 4): Peon(self),
-                (6, 5): Peon(self),
-                (6, 6): Peon(self),
-                (6, 7): Peon(self),
-                (7, 0): Torre(self),
-                (7, 1): Caballo(self),
-                (7, 2): Alfil(self),
-                (7, 3): Reina(self),
-                (7, 4): self.rey,
-                (7, 5): Alfil(self),
-                (7, 6): Caballo(self),
-                (7, 7): Torre(self),
-            }
-
-
-
-class AdminArmys:
-    def __init__(self, armyA: Army, armyB: Army) -> None:
-        self.claseA = armyA.clase
-        self.claseB = armyB.clase
-
-        # Estructura que relaciona Las clases enemigas
-        self.relatedEnemy: dict[str, str] = {
-            armyA.clase : armyB.clase,
-            armyB.clase : armyA.clase
-        }
-        
-        # Estructura armys por su clase
-        self.armys: dict[str, Army] = {
-            armyA.clase : armyA,
-            armyB.clase : armyB
-        }
-        
-
-    def initInfluence(self, app) -> None:
-        self.armys[self.claseA].initInfluence(app)
-        self.armys[self.claseB].initInfluence(app)
-
-
-    def getTotalFichas(self) -> list[tuple[tuple, Ficha]]:
-        return \
-        list(self.armys[self.claseA].fichas.items()) + \
-        list(self.armys[self.claseB].fichas.items())
+    # propiedad in_hacke_mate
+    @property
+    def in_hacke_mate(self) -> bool:
+        return self.__in_hacke_mate
+    
+    @in_hacke_mate.setter
+    def in_hacke_mate(self, value: bool) -> None:
+        self.__in_hacke_mate = value
 
     
-    def getArmyForClass(self, clase: str) -> Army:
-        return self.armys[clase]
+    # propiedad orientacion
+    @property
+    def orientacion(self) -> int:
+        return self.__orientacion
+    
+    @orientacion.setter
+    def orientacion(self, value: int) -> None:
+        self.__orientacion = value
 
 
-    def getEnemyArmyForClass(self, clase: str) -> Army:
-        return self.armys[self.getEnemyForClass(clase)]
+    # propiedad clase
+    @property
+    def clase(self) -> str:
+        return self.__clase
+    
+    @clase.setter
+    def clase(self, value: str) -> None:
+        self.__clase = value
 
 
-    def reStartArmys(self):
-        self.armys[self.claseA].reStartFichas()
-        self.armys[self.claseB].reStartFichas()
+    # propiedad rey
+    @property
+    def rey(self) -> Rey:
+        return self.__rey
+    
+    @rey.setter
+    def rey(self, value: Rey) -> None:
+        self.__rey = value
+
+
+    # propiedad coords_priority
+    @property
+    def coords_priority(self) -> list[Coord, str] :
+        return self.__coords_priority
+    
+    @coords_priority.setter
+    def coords_priority(self, value: list[Coord, str] ) -> None:
+        self.__coords_priority = value
+
+
+    # propiedad fichas
+    @property
+    def fichas(self) -> list[tuple[Coord, PieceChess]]:
+        return list(self.__copy_fichas.items())
+    
+    @fichas.setter
+    def fichas(self, value: dict[Coord, PieceChess]) -> None:
+        self.__fichas = value
+
+        self.__copy_fichas = deepcopy(self.__fichas)
+
+        # Busqueda del rey
+        for ficha in self.__copy_fichas.values():
+            if isinstance(ficha, Rey):
+                self.__rey = ficha
+                break
+
+
+    def init_influence(self, board: "Board") -> None: 
+        for _, ficha in self.fichas:
+            ficha.spread_influence(board)
 
     
-    def getEnemyForClass(self, clase: str) -> str:
-        return self.relatedEnemy[clase]
+    def update_influence_rey(self, board: "Board") -> None: 
+        self.rey.spread_influence(board)
 
 
-adminArmys = AdminArmys(ArmyWhite(), ArmyBlack())
+    def restart(self) -> None: 
+        self.in_hacke = False
+        self.in_hacke_mate = False
+
+        self.__copy_fichas = deepcopy(self.__fichas)
+
+        # Busqueda del rey
+        for ficha in self.__copy_fichas.values():
+            if isinstance(ficha, Rey):
+                self.__rey = ficha
+                break
+
+

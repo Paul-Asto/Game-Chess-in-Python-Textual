@@ -8,6 +8,9 @@ class AbstractCoord:
     def __str__(self) -> tuple:
         return self.value
     
+    def __hash__(self):
+        return hash(self.value)
+    
     def __eq__(self, other) -> bool:
         if  issubclass(type(other), AbstractCoord):
             return self.value == other.value
@@ -61,47 +64,3 @@ class Coord(AbstractCoord):
 
     def copy(self):
         return Coord(self.y, self.x)
-
-
-
-
-class Mov(AbstractCoord):  
-    def __init__(self, y: int, x: int) -> None:
-        super().__init__(y, x)
-
-    def GetOpuesto(self):
-        return Mov(-(self.y), -(self.x))
-    
-    def GetMovInvertEje(self):
-        return Mov((self.x), (self.y))
-
-
-
-class Direction(AbstractCoord):
-    def __init__(self, y: int, x: int) -> None:
-        super().__init__(y, x)
-
-
-class Distance:
-    def __init__(self ,coordInit: Coord, coordGoal: Coord) -> None:
-        self.coordInit: Coord = coordInit
-        self.coordGoal: Coord = coordGoal
-    
-        self.value: Coord = coordGoal - coordInit
-
-
-    def __str__(self) -> tuple:
-        return self.value
-    
-    def __iter__(self):
-        return iter(self.value)
-    
-
-    def GetAbsoluteDistance(self):
-        newDistance: Distance = Distance(self.coordInit, self.coordGoal)
-        newDistance.value.Absolute()
-        return newDistance
-
-
-    def indexMaxOffDistance(self):
-        return self.value.indexMax()
