@@ -17,11 +17,23 @@ class Army:
     __orientacion: int 
     __clase: str
 
-    __rey: Rey 
-    __coords_priority: list[Coord, str] = []
+    __coords_priority: list[Coord, str] 
+    __pieces_defending: list[PieceChess] 
 
+    __rey: Rey 
     __fichas: dict[Coord, PieceChess]
-    __copy_fichas: dict[Coord, PieceChess] = {}
+    __copy_fichas: dict[Coord, PieceChess] 
+
+    def __init__(self):
+        self.__coords_priority = []
+        self.__pieces_defending = []
+        
+
+
+    # propiedad pieces_defending
+    @property
+    def pieces_defending(self) -> list[PieceChess]:
+        return self.__pieces_defending
 
 
     # propiedad in_hacke
@@ -122,5 +134,3 @@ class Army:
             if isinstance(ficha, Rey):
                 self.__rey = ficha
                 break
-
-

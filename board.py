@@ -1,3 +1,5 @@
+from constant import CHESS_BOARD_SIZE_X, CHESS_BOARD_SIZE_Y
+
 from coord import Coord
 from scuare import Scuare
 from piece import EmptyChess, EntityChess, PieceChess
@@ -22,16 +24,16 @@ class Board:
 
 
 
-    La clase Board es una representacion de un tablero de ajedrez que esta conformado 
+    > La clase Board es una representacion de un tablero de ajedrez que esta conformado 
     por una matriz 2D de 8 x 8 de clases "Scuare"
 
-    La matriz es inmutable, las clases "Scuare" nunca cambiaran de posicion, ni se modificara 
+    > La matriz es inmutable, las clases "Scuare" nunca cambiaran de posicion, ni se modificara 
     ni se agregara mas elementos
 
-    Cada clase "Scuare contiene informacion de su coordenada actual en la matriz, ademas de que 
+    > Cada clase "Scuare contiene informacion de su coordenada actual en la matriz, ademas de que 
     puede poseer dentro de si una clase derivada de "EntityChess"("EmptyChess or "PieceChess"). 
 
-    Al crear una instancia, todos los "Scuares tendran una instancia de la clase "EmptyChess" 
+    > Al crear una instancia, todos los "Scuares tendran una instancia de la clase "EmptyChess" 
     como ficha por defecto.
 
     Scuare(
@@ -39,23 +41,23 @@ class Board:
         ficha = EmptyChess()        # por defecto al instanciar la clase "Board"
     )
 
-    Las objetos "Scuare", si pueden cambiar la ficha que llevan dentro de si, por cualquier 
+    > Las objetos "Scuare", si pueden cambiar la ficha que llevan dentro de si, por cualquier 
     objeto de clase "EmptyChess o derivadas de "PieceChess" como "Peon", "Rey", "Caballo", etc
 
-    La mayoria de las funciones que realizan busquedas dentro de la matriz utilizan objetos "Coord" 
+    > La mayoria de las funciones que realizan busquedas dentro de la matriz utilizan objetos "Coord" 
     como parametro
 
 
-    ATRIBUTOS: \n
+    - ATRIBUTOS: \n
 
-    size_y (int):                       Numero de elementos de eje y de la matriz \n
-    size_x (int):                       Numero de elementos de eje y de la matriz \n
+    - size_y (int):                       Numero de elementos de eje y de la matriz \n
+    - size_x (int):                       Numero de elementos de eje y de la matriz \n
 
-    content (tuple[tuple[Scuare]] ):    Contenido de la matriz de "Scuare" \n
+    - content (tuple[tuple[Scuare]] ):    Contenido de la matriz de "Scuare" \n
     '''
 
-    size_y: int = 8  
-    size_x: int = 8
+    size_y: int = CHESS_BOARD_SIZE_Y
+    size_x: int = CHESS_BOARD_SIZE_X
     
     content: tuple[tuple[Scuare]] 
 
@@ -67,7 +69,7 @@ class Board:
 
         self.refresh_content()
 
-    def refresh_content(self):
+    def refresh_content(self) -> None:
         '''
         Genera una matriz 2d 8 x 8 de clases "Scuare" usando List comprehension, la matriz esta comformada 
         de una tupla de tuplas se clases "Scuare" que se inicializan usando como parametros la coordenada

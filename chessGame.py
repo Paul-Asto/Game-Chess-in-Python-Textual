@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from constant import OBJ_EMPTY, OBJ_ENEMY
 
 from coord import Coord
 from piece import PieceChess, EntityChess, EmptyChess
@@ -47,6 +48,20 @@ class ChessGame:
         self.init()
     
 
+    # Turno Funcions
+    def update_turno(self) -> None: 
+        self.turno = self.adminFichas.get_enemy_for_class(self.turno)
+
+
+    def is_equals_turno(self, turno: str) -> str:
+        return self.turno == turno
+
+
+    # tablero Funcions
+    def get_ficha(self, coord: Coord) -> EntityChess | None:
+        return self.tablero.get_ficha(coord)
+
+
     def iteration(self, app: "ChessApp")-> None:
         self.update_turno()
         app.update_view_turno(self.turno)
@@ -57,33 +72,6 @@ class ChessGame:
         # Evento de finalizacion del programa
         if admin_armys.get_enemy_army_for_class(self.previous_ficha.clase).in_hacke_mate:
             app.exit_app()
-
-
-    # Turno Funcions
-    def update_turno(self) -> None: 
-        self.turno = self.adminFichas.get_enemy_for_class(self.turno)
-
-
-    def is_equals_turno(self, turno: str) -> str:
-        return self.turno == turno
-
-
-    # SelectedFicha Funcions
-    def getSelectedFicha(self) -> EntityChess:
-        return self.selected_ficha
-
-    def set_selected_ficha(self, value: EntityChess) -> None:
-        self.previous_ficha = self.selected_ficha
-        self.selected_ficha = value
-
-
-    # tablero Funcions
-    def get_scuare(self, coord: tuple) -> Scuare:
-        return self.tablero.get_scuare(coord)
-    
-
-    def get_ficha(self, coord: Coord) -> EntityChess | None:
-        return self.tablero.get_ficha(coord)
 
 
     def trade_ficha(self, ficha_A: EntityChess, ficha_B: EntityChess) -> None:
@@ -121,6 +109,11 @@ class ChessGame:
         app.save_view_kill(ficha_B)
 
 
+    def set_selected_ficha(self, value: EntityChess) -> None:
+        self.previous_ficha = self.selected_ficha
+        self.selected_ficha = value
+
+
     def accion_game(self, group_blocks: "GroupBlocks") -> None:
         if isinstance(self.previous_ficha, PieceChess):
             group_blocks.clearRegisterBlock(self.previous_ficha.get_coords_objetive())
@@ -138,7 +131,7 @@ class ChessGame:
                 self.set_selected_ficha(EmptyChess())
 
             case (PieceChess(), EmptyChess()):
-                if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, "empty"):
+                if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, OBJ_EMPTY):
                     self.trade_ficha(self.previous_ficha, self.selected_ficha)
                     group_blocks.update_view_block_off_coord(self.previous_ficha.coord, self.selected_ficha.coord)
 
@@ -150,7 +143,7 @@ class ChessGame:
                     self.set_selected_ficha(EmptyChess())
                     return
 
-                if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, "enemy"):
+                if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, OBJ_ENEMY):
                     self.fusion_ficha(self.previous_ficha, self.selected_ficha, group_blocks.app)
                     group_blocks.update_view_block_off_coord(self.previous_ficha.coord, self.selected_ficha.coord)
                     self.set_selected_ficha(EmptyChess())

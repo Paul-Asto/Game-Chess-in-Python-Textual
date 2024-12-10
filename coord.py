@@ -11,7 +11,7 @@ class AbstractCoord:
     def __hash__(self):
         return hash(self.value)
     
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: "AbstractCoord") -> bool:
         if  issubclass(type(other), AbstractCoord):
             return self.value == other.value
         

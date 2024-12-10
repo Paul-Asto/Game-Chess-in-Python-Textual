@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID, NONE_ARMY
 
 from mov_piece import MovPiece
 from coord import Coord
@@ -75,10 +76,11 @@ class EntityChess:
     __char: str = ""
     __scuare: "Scuare"
     __army: "Army"
-    __clase_alter: str = ""
+    __clase_alter: str 
 
     def __init__(self, army: "Army" = None) -> None:
         self.__army = army
+        self.__clase_alter = ""
     
     # propiedad in_hacke
     @property
@@ -172,16 +174,20 @@ class EmptyChess(EntityChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
 
-        self.clase = "empty"
+        self.clase = NONE_ARMY
 
 
 
 class PieceChess(EntityChess):
 
     __in_defense: bool = False
-    __movs_defending: list[MovPiece] = []
+    __movs_defending: list[MovPiece]
 
     admin_obj: AdminObjetives
+
+    def __init__(self, army = None):
+        super().__init__(army)
+        self.__movs_defending = []
 
 
     # propiedad movs_defending
@@ -213,7 +219,7 @@ class PieceChess(EntityChess):
     
     def clear_influence(self, board: "Board") -> None: 
         for mov in self.admin_obj.get_movs():
-                    self.clear_influence_off_mov(board, mov)
+            self.clear_influence_off_mov(board, mov)
 
     
     def clear_influence_off_mov(self, board: "Board", mov: MovPiece) -> None: 
@@ -232,8 +238,8 @@ class PieceChess(EntityChess):
 
             match ficha:
                 case PieceChess():
-                    condition: bool = mov.is_ofensive and not self.is_equals_class(ficha.clase)
-                    tipo: str = "enemy" if condition else "invalid"
+                    condition: bool = mov.is_offensive and not self.is_equals_class(ficha.clase)
+                    tipo: str = OBJ_ENEMY if condition else OBJ_INVALID
 
                     self.add_coord_objetive(mov, coord_actual, tipo)
                     ficha.add_mov_prowl(mov)
@@ -241,7 +247,7 @@ class PieceChess(EntityChess):
 
                 case EmptyChess():
                     condition: bool = mov.is_occupiable
-                    tipo: str = "empty" if condition else "invalid"
+                    tipo: str = OBJ_EMPTY if condition else OBJ_INVALID
 
                     self.add_coord_objetive(mov, coord_actual, tipo)
                     ficha.add_mov_prowl(mov)
@@ -264,7 +270,10 @@ class PieceChess(EntityChess):
                 return False
             
             for mov in self.__movs_defending:
-                if self.admin_obj.coord_in_store_off_mov(mov):
+                if not mov in self.admin_obj.list_movs:
+                    continue
+                
+                if self.admin_obj.coord_in_store_off_mov(mov, coord, value):
                         return True
 
             return False

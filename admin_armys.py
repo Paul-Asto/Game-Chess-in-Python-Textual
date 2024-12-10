@@ -10,6 +10,7 @@ from caballo import Caballo
 from piece import PieceChess
 
 from typing import TYPE_CHECKING
+from constant import ARMY_BLACK, ARMY_WHITE
 
 if TYPE_CHECKING:
     from board import Board
@@ -19,7 +20,7 @@ class ArmyBlack(Army):
     def __init__(self) -> None:
         super().__init__()
 
-        self.clase = "armyBlack"
+        self.clase = ARMY_BLACK
         self.orientacion = 1 
         
         self.fichas = {
@@ -47,7 +48,7 @@ class ArmyWhite(Army):
     def __init__(self) -> None:
         super().__init__()
 
-        self.clase = "armyWhite"
+        self.clase = ARMY_WHITE
         self.orientacion = -1
 
         self.fichas = {
@@ -96,6 +97,7 @@ class AdminArmys:
         self.armys[self.claseB].fichas
 
 
+
     def init_influence(self, board: "Board") -> None:
         self.armys[self.claseA].init_influence(board)
         self.armys[self.claseB].init_influence(board)
@@ -107,15 +109,15 @@ class AdminArmys:
 
     def get_enemy_army_for_class(self, clase: str) -> Army:
         return self.armys[self.get_enemy_for_class(clase)]
+    
+
+    def get_enemy_for_class(self, clase: str) -> str:
+        return self.related_enemy[clase]
 
 
     def reStartArmys(self):
         self.armys[self.claseA].restart()
         self.armys[self.claseB].restart()
-
-    
-    def get_enemy_for_class(self, clase: str) -> str:
-        return self.related_enemy[clase]
 
 
 

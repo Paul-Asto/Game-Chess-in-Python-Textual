@@ -3,6 +3,13 @@ from textual.widget import Widget
 from textual.containers import Vertical, Horizontal
 from textual.widgets import Static, Button
 
+from constant import \
+    BLOCK_BLACK,\
+    BLOCK_WHITE,\
+    CHESS_BOARD_SIZE_X,\
+    CHESS_BOARD_SIZE_Y,\
+    ARMY_BLACK,\
+    ARMY_WHITE
 
 from coord import Coord
 from chessGame import chess_game
@@ -14,16 +21,18 @@ from piece import PieceChess
 def secuence_class_widget():
     x = 0; y = 0
     while True:
-        if y % 8  == 0: x += 1
-        yield "negro" if x % 2 == 0 else "blanco"
+        if y % 8  == 0: 
+            x += 1
+
+        yield BLOCK_BLACK if x % 2 == 0 else BLOCK_WHITE
         x += 1; y += 1
 
 generator_class_widget = secuence_class_widget()
 
 
 def secuence_coord_widget():
-    for y in range(8):
-        for x in range(8):
+    for y in range(CHESS_BOARD_SIZE_Y):
+        for x in range( CHESS_BOARD_SIZE_X):
             yield Coord(y, x)
 
 generator_coord_widget = secuence_coord_widget()
@@ -111,7 +120,7 @@ class ChessApp(App):
                         Block(
                             classes= next(generator_class_widget),
                             coord = next(generator_coord_widget),
-                        ) for _ in range(8 * 8)]
+                        ) for _ in range(CHESS_BOARD_SIZE_Y * CHESS_BOARD_SIZE_X)]
                 )
 
                 yield self.tablero
@@ -146,7 +155,7 @@ class ChessApp(App):
     def update_view_turno(self, turno: str):
         turno:str
         
-        if turno == "armyWhite":
+        if turno == ARMY_WHITE:
             turno = "azules" 
             self.turno.add_class("turno-azul") 
             self.turno.remove_class("turno-rojo")      
@@ -160,7 +169,7 @@ class ChessApp(App):
 
 
     def save_view_kill(self, ficha: PieceChess):
-        if ficha.clase == "armyBlack":
+        if ficha.clase == ARMY_BLACK:
             self.killFichasRojas.mount(Static(ficha.char))
     
         else:

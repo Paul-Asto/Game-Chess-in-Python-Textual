@@ -14,7 +14,13 @@ class MovPiece(AbstractCoord):
 
         self.is_spreadable: bool = is_spreadable
         self.is_occupiable: bool = is_occupiable
-        self.is_ofensive: bool = is_offensive
+        self.is_offensive: bool = is_offensive
     
     def GetOpuesto(self):
-        return MovPiece(-(self.y), -(self.x))
+        return MovPiece(
+            self.ficha,
+            (-(self.y), -(self.x)),
+            self.is_spreadable,
+            self.is_occupiable,
+            self.is_offensive,
+            )

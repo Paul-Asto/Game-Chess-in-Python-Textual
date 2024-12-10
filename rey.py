@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from constant import OBJ_INVALID, OBJ_EMPTY, OBJ_ENEMY
 
 from coord import Coord
 from mov_piece import MovPiece
@@ -7,7 +8,7 @@ from piece import PieceChess, AdminObjetives, EmptyChess, EntityChess
 
 if TYPE_CHECKING:
     from scuare import Scuare
-    from chessGame import ChessGame
+    from board import Board
 
 
 
@@ -16,7 +17,6 @@ class Rey(PieceChess):
         super().__init__(army)
 
         self.char = chr(9812)
-        self.pieces_defending: list[PieceChess] = []
 
         self.admin_obj = AdminObjetives(
             MovPiece(self, (0, 1)),
@@ -29,69 +29,81 @@ class Rey(PieceChess):
             MovPiece(self, (1, 1)),
         )
 
+    def add_objetives(self, board: "Board", mov: MovPiece):
+        in_first_scuare: bool = True
+        registered_defender: bool = False
 
-    def registrarObjectives(self, game: "ChessGame", mov: MovPiece):
-        fichaDefender: PieceChess  = None
-        directRegistrado: bool = False
+        ficha_defender: PieceChess = None
+        coord_actual: Coord = self.coord.copy()
 
-        def registerRecursive(coord: Coord):
-            nonlocal fichaDefender
-            nonlocal directRegistrado
+        while True:
+            coord_actual += mov
+            ficha_actual: EntityChess = board.get_ficha(coord_actual)
 
-            ficha: EntityChess = game.get_ficha(coord)
-
-            match ficha:
+            match ficha_actual:
                 case PieceChess():
-                    if fichaDefender == None:
-                        if (ficha.clase != self.clase):
-                            if not directRegistrado:
-                                self.add_coord_objetive(mov, coord, "enemy")
-                                ficha.add_mov_prowl(mov)
+                    # se ejeuta si es el primer movimiento
+                    if in_first_scuare:
+                        if not ficha_actual.is_equals_class(self.clase):
+                            self.add_coord_objetive(mov, coord_actual, OBJ_ENEMY)
+                            ficha_actual.add_mov_prowl(mov)
                             return
 
-                        else:
-                            self.add_coord_objetive(mov, coord, "invalid")
-                            fichaDefender = ficha
-                            ficha.add_mov_prowl(mov)
+                        self.add_coord_objetive(mov, coord_actual, OBJ_INVALID)
+                        ficha_actual.add_mov_prowl(mov)
 
-                            for movEnemy in ficha.admin_obj.get_movs():
-                                if mov.GetOpuesto() == movEnemy and movEnemy.is_spreadable:
-                                    fichaDefender.in_defense = True
-                                    self.pieces_defending.append(fichaDefender)
-                                    fichaDefender.movs_defending = [mov, movEnemy]
-                                    break
-                        return
-                    
+                        ficha_defender = ficha_actual
+                        registered_defender = True
+
+                        in_first_scuare = False
+                        continue
+
+                    # se ejecuta para buscar la ficha defensiva
+                    if not registered_defender:
+                        if not ficha_actual.is_equals_class(self.clase):
+                            break
+
+                        ficha_defender = ficha_actual
+                        registered_defender = True
+                        continue
+
+                    # se ejecuta para buscar la ficha enemiga
+                    if ficha_actual.is_equals_class(self.clase):
+                        break
+
+                    for movEnemy in ficha_actual.admin_obj.get_movs():
+                        if mov.GetOpuesto() == movEnemy and movEnemy.is_spreadable:
+                            self.army.pieces_defending.append(ficha_defender)
+
+                            ficha_defender.in_defense = True
+                            ficha_defender.movs_defending = [mov, movEnemy]
+                            break
+
 
                 case EmptyChess():
-                    if not directRegistrado:
-                        self.add_coord_objetive(mov, coord, "empty")
-                        ficha.add_mov_prowl(mov)
-                        
+                    if in_first_scuare:
+                        self.add_coord_objetive(mov, coord_actual, OBJ_EMPTY)
+                        ficha_actual.add_mov_prowl(mov)
+                        in_first_scuare = False
+
 
                 case None:
                     return 
                 
-            directRegistrado = True
-                        
-            
-            registerRecursive(coord + mov)
 
-        registerRecursive(self.coord + mov)
-
-
-    def spread_influence(self, app: "ChessGame") -> None:     
+    def spread_influence(self, board: "Board") -> None:
+        
         # Cambiar estado de fichas defensivas anteriores
-        for ficha in self.pieces_defending:
+        for ficha in self.army.pieces_defending:
             ficha.in_defense = False
         
-        self.movs_defending.clear()
+        self.army.pieces_defending.clear()
 
         # Cambiamos el estado hacke anterior
         self.army.in_hacke = False
 
         # llamada a la funcion de la superclase
-        super().spread_influence(app)
+        super().spread_influence(board)
 
         # Descartar opciones de coordenadas en amenaza
         for mov in self.admin_obj.get_movs():
@@ -101,11 +113,11 @@ class Rey(PieceChess):
                 continue
 
             coord: Coord = coords[0]
-            scuare: "Scuare" = app.get_scuare(coord)
+            scuare: "Scuare" = board.get_scuare(coord)
 
             for mov_prowl in scuare.movs_on_prowl:
-                if (mov_prowl.ficha.clase != self.clase) and mov_prowl.is_ofensive:
-                    self.add_coord_objetive(mov, coord, "invalid")
+                if (mov_prowl.ficha.clase != self.clase) and mov_prowl.is_offensive:
+                    self.add_coord_objetive(mov, coord, OBJ_INVALID)
                     break
 
         # Verificar Hacke 
@@ -115,14 +127,14 @@ class Rey(PieceChess):
 
             self.army.in_hacke = True
 
-            coords_prioridad: list[tuple] = [(mov.ficha.coord, "enemy")] + mov.ficha.admin_obj.get_data_off_mov(mov)
+            coords_prioridad: list[tuple] = [(mov.ficha.coord, OBJ_ENEMY)] + mov.ficha.admin_obj.get_data_off_mov(mov)
             self.army.coords_priority = coords_prioridad
 
 
             coord = self.coord + mov
 
-            if mov.is_ofensive and mov.is_spreadable and app.tablero.is_valid_coord(coord):
-                self.admin_obj.add_coord_off_mov(mov, coord, "invalid")
+            if mov.is_offensive and mov.is_spreadable and board.is_valid_coord(coord):
+                self.admin_obj.add_coord_off_mov(mov, coord, OBJ_INVALID)
             break
 
 
@@ -136,14 +148,12 @@ class Rey(PieceChess):
                 coords_disp += ficha.get_coords_objetive()
             
             for _, tipo in coords_disp:
-                if tipo != "invalid":
+                if tipo != OBJ_INVALID:
                     result = False
                     break
             
             if result:
                 self.army.in_hacke_mate = True
-
-
 
 
 
