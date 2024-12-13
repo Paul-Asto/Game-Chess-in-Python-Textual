@@ -1,14 +1,19 @@
-from piece import PieceChess, AdminObjetives
-from mov_piece import MovPiece
+from typing import TYPE_CHECKING
+
+from piece.piece import PieceChess
+from piece.mov_piece import MovPiece
+
+if TYPE_CHECKING:
+    from army import Army
 
 
 
 class Reina(PieceChess):
-    def __init__(self, army = None):
+    def __init__(self, army: "Army" = None):
         super().__init__(army)
         self.char = chr(9813)
 
-        self.admin_obj = AdminObjetives(
+        self.admin_obj.add_movs(
             MovPiece(self, (0, 1), True),
             MovPiece(self, (0, -1), True),
             MovPiece(self, (-1, 0), True),

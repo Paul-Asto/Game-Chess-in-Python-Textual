@@ -1,4 +1,4 @@
-from piece import PieceChess, AdminObjetives
+from piece.piece import PieceChess, AdminObjetives
 from mov_piece import MovPiece
 
 
@@ -8,7 +8,7 @@ class Torre(PieceChess):
         super().__init__(army)
         self.char = chr(9814)
 
-        self.admin_obj = AdminObjetives(
+        self.admin_obj.add_movs(
             MovPiece(self, (0, 1), True),
             MovPiece(self, (0, -1), True),
             MovPiece(self, (-1, 0), True),

@@ -1,8 +1,8 @@
 from copy import deepcopy
 from coord import Coord
 
-from rey import Rey
-from piece import PieceChess
+from piece.rey import Rey
+from piece.piece import PieceChess
 
 from typing import TYPE_CHECKING
 
@@ -27,6 +27,7 @@ class Army:
     def __init__(self):
         self.__coords_priority = []
         self.__pieces_defending = []
+        self.__copy_fichas = {}
         
 
 
@@ -107,11 +108,13 @@ class Army:
 
         self.__copy_fichas = deepcopy(self.__fichas)
 
-        # Busqueda del rey
+        # Busqueda del rey y seteo de army
         for ficha in self.__copy_fichas.values():
+            ficha.army = self
+
             if isinstance(ficha, Rey):
                 self.__rey = ficha
-                break
+                
 
 
     def init_influence(self, board: "Board") -> None: 
@@ -131,6 +134,8 @@ class Army:
 
         # Busqueda del rey
         for ficha in self.__copy_fichas.values():
+            ficha.army = self
+
             if isinstance(ficha, Rey):
                 self.__rey = ficha
-                break
+                

@@ -2,7 +2,7 @@ from constant import CHESS_BOARD_SIZE_X, CHESS_BOARD_SIZE_Y
 
 from coord import Coord
 from scuare import Scuare
-from piece import EmptyChess, EntityChess, PieceChess
+from piece.piece import EmptyChess, EntityChess, PieceChess
 
 
 
@@ -71,7 +71,7 @@ class Board:
 
     def refresh_content(self) -> None:
         '''
-        Genera una matriz 2d 8 x 8 de clases "Scuare" usando List comprehension, la matriz esta comformada 
+        Genera una matriz 2d 8 x 8 de clases "Scuare" usando List comprehension y lo guarda en el atributo content, la matriz esta conformada 
         de una tupla de tuplas se clases "Scuare" que se inicializan usando como parametros la coordenada
         de la posicion actual y una instancia de "EmptyChess" que representa un ficha vacia
         '''
@@ -121,7 +121,7 @@ class Board:
         return self.content[coord.y][coord.x] if self.is_valid_coord(coord) else None
     
 
-    # Funcions add Fichas
+    # Funcions set Fichas
     def set_ficha(self, ficha: PieceChess, coord: Coord) -> None:
         '''
         Setea la ficha pasada como parametro en el "Scuare" 
@@ -141,3 +141,33 @@ class Board:
 
         for coord, ficha in fichas:
             self.set_ficha(ficha, coord)
+
+
+
+    def trade_fichas(self, ficha_a: EntityChess, ficha_b: EntityChess) -> None:
+        ficha_a.clear_influence(self)
+        ficha_a.clear_influence(self)
+
+        scuareA:Scuare = ficha_a.scuare
+        scuareB:Scuare = ficha_b.scuare
+
+        scuareA.ficha = ficha_b
+        scuareB.ficha = ficha_a
+
+        scuareA.ficha.spread_influence(self)
+        scuareB.ficha.spread_influence(self)
+
+
+    def fusion_fichas(self, ficha_init: EntityChess, ficha_final: EntityChess) -> None:
+        ficha_init.clear_influence(self)
+        ficha_final.clear_influence(self)
+
+        scuare_init:Scuare = ficha_init.scuare
+        scuare_final:Scuare = ficha_final.scuare
+
+        ficha_final.scuare = scuare_init
+        scuare_init.ficha = EmptyChess()
+        scuare_final.ficha = ficha_init
+
+        scuare_init.ficha.spread_influence(self)
+        scuare_final.ficha.spread_influence(self)

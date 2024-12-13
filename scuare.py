@@ -1,5 +1,5 @@
 from coord import Coord
-from piece import EntityChess
+from piece.piece import EntityChess
 from mov_piece import MovPiece
     
 

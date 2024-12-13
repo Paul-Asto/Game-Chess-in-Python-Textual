@@ -14,7 +14,7 @@ from constant import \
 from coord import Coord
 from chessGame import chess_game
 
-from piece import PieceChess
+from piece.piece import PieceChess
 
 
 

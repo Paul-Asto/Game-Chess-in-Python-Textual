@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from constant import OBJ_EMPTY, OBJ_ENEMY
 
 from coord import Coord
-from piece import PieceChess, EntityChess, EmptyChess
+from piece.piece import PieceChess, EntityChess, EmptyChess
 from board import Board
 
 from admin_armys import AdminArmys, admin_armys
@@ -91,8 +91,8 @@ class ChessGame:
 
 
     def fusion_ficha(self, ficha_A: EntityChess, ficha_B: EntityChess, app: "ChessApp") -> None:
-        ficha_A.clear_influence(self)
-        ficha_B.clear_influence(self)
+        ficha_A.clear_influence(self.tablero)
+        ficha_B.clear_influence(self.tablero)
 
         scuareA:Scuare = ficha_A.scuare
         scuareB:Scuare = ficha_B.scuare
@@ -115,6 +115,7 @@ class ChessGame:
 
 
     def accion_game(self, group_blocks: "GroupBlocks") -> None:
+        # si la ficha anterior es una pieza borra el renderizado de objetivos
         if isinstance(self.previous_ficha, PieceChess):
             group_blocks.clearRegisterBlock(self.previous_ficha.get_coords_objetive())
 
@@ -124,6 +125,7 @@ class ChessGame:
                 pass    
 
             case (EmptyChess(), PieceChess()):
+                # Renderiza los objetivos
                 if self.is_equals_turno(self.selected_ficha.clase):
                     group_blocks.addRegisterBlock(self.selected_ficha.get_coords_objetive())
                     return
@@ -131,6 +133,7 @@ class ChessGame:
                 self.set_selected_ficha(EmptyChess())
 
             case (PieceChess(), EmptyChess()):
+                # Se realiza un movimiento de fichas
                 if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, OBJ_EMPTY):
                     self.trade_ficha(self.previous_ficha, self.selected_ficha)
                     group_blocks.update_view_block_off_coord(self.previous_ficha.coord, self.selected_ficha.coord)
@@ -139,10 +142,12 @@ class ChessGame:
                     
 
             case (PieceChess(), PieceChess()):
+                # No hace nada si se selecciona la misma ficha 2 veces
                 if self.previous_ficha == self.selected_ficha:
                     self.set_selected_ficha(EmptyChess())
                     return
 
+                # se realiza una fusion de fichas
                 if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, OBJ_ENEMY):
                     self.fusion_ficha(self.previous_ficha, self.selected_ficha, group_blocks.app)
                     group_blocks.update_view_block_off_coord(self.previous_ficha.coord, self.selected_ficha.coord)
@@ -151,6 +156,7 @@ class ChessGame:
                     self.iteration(group_blocks.app)  
                     return
 
+                # Renderiza los objetivos
                 if self.is_equals_turno(self.selected_ficha.clase):
                     group_blocks.addRegisterBlock(self.selected_ficha.get_coords_objetive())
                     return

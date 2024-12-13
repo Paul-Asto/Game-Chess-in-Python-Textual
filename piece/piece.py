@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 from constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID, NONE_ARMY
 
-from mov_piece import MovPiece
+from piece.mov_piece import MovPiece
 from coord import Coord
 
 if TYPE_CHECKING:
@@ -12,9 +12,28 @@ if TYPE_CHECKING:
 
 
 class AdminObjetives:
-    def __init__(self, *movs: list[MovPiece]) -> None:
-        self.list_movs: list[MovPiece] = movs
-        self.store_data: dict[MovPiece, dict[Coord, str]] = {mov : {} for mov in movs}
+    list_movs: list[MovPiece] 
+    store_data: dict[MovPiece, dict[Coord, str]]
+
+    def __init__(self, *movs_piece: MovPiece ) -> None:
+        self.list_movs = []
+        self.store_data = {}
+
+        self.add_movs(*movs_piece)
+
+    def add_movs(self, *movs_piece: MovPiece) -> None:
+        for mov in movs_piece:
+            if not mov in self.list_movs:
+                self.list_movs.append(mov)
+                self.store_data[mov] = {}
+
+
+    def deleted_movs(self, *movs_piece: MovPiece) -> None:
+        for mov in movs_piece:
+            try: 
+                self.list_movs.remove(mov) 
+                self.store_data.pop(mov) 
+            except ValueError or KeyError: pass
 
 
     def get_movs(self) -> list[MovPiece]:
@@ -23,6 +42,7 @@ class AdminObjetives:
 
     def get_coords_off_mov(self, mov: MovPiece) -> list[Coord]:
         return list(self.store_data[mov].keys())
+
 
     def get_coords(self) -> list[Coord]:
         result: list[Coord] = []
@@ -73,14 +93,13 @@ class AdminObjetives:
 
 class EntityChess:
 
-    __char: str = ""
-    __scuare: "Scuare"
+    char: str = ""
+    __scuare: "Scuare" = None
     __army: "Army"
-    __clase_alter: str 
+    __clase_alter: str = ""
 
     def __init__(self, army: "Army" = None) -> None:
         self.__army = army
-        self.__clase_alter = ""
     
     # propiedad in_hacke
     @property
@@ -99,7 +118,7 @@ class EntityChess:
             return self.army.clase
         
         if self.__clase_alter == "":
-            raise Exception("La ficha no pertenece a ninguna armada, dale un valor manualmente al atributo clase")
+            raise Exception("La ficha no pertenece a ninguna clase")
 
         return self.__clase_alter
     
@@ -111,12 +130,17 @@ class EntityChess:
     # Propiedad Coordenada
     @property
     def coord(self) -> Coord: 
-        return self.scuare.coord
+        if self.scuare == None:
+            raise Exception("La ficha no se encuentra en un board")
 
+        return self.scuare.coord 
 
     # Propiedad Army
     @property
-    def army(self) -> "Army": 
+    def army(self) -> "Army":
+        if self.__army == None:
+            raise Exception("La ficha no pertenece a ninguna armada")
+        
         return self.__army
 
     @army.setter
@@ -124,19 +148,12 @@ class EntityChess:
         self.__army = army
 
 
-    # Propiedad Char View
-    @property
-    def char(self) -> str: 
-        return self.__char
-
-    @char.setter
-    def char(self, char: str) -> None: 
-        self.__char = char
-
-
     # Propiedad Scuare
     @property
     def scuare(self) -> "Scuare": 
+        if self.__scuare == None:
+            raise Exception("La ficha no se encuentra en ningun scuare")
+        
         return self.__scuare
 
     @scuare.setter
@@ -151,6 +168,9 @@ class EntityChess:
     def add_mov_prowl(self ,mov: MovPiece) -> None: 
         self.scuare.add_mov_prowl(mov)
 
+
+    def add_objetives(self, board: "Board", mov: MovPiece): ...
+
     
     def update_presence(self, board: "Board") -> None: 
         for mov in self.__scuare.movs_on_prowl.copy():
@@ -162,10 +182,9 @@ class EntityChess:
         self.update_presence(board)
 
     
-    def add_objetives(self, board: "Board", mov: MovPiece): ...
-
-    
     def clear_influence(self, board: "Board") -> None: ...
+
+    def clear_influence_off_mov(self, board: "Board", mov: MovPiece) -> None: ...
 
 
 
@@ -180,36 +199,17 @@ class EmptyChess(EntityChess):
 
 class PieceChess(EntityChess):
 
-    __in_defense: bool = False
-    __movs_defending: list[MovPiece]
+    in_still: bool = False
+    allowed_movs: list[MovPiece]
 
     admin_obj: AdminObjetives
 
     def __init__(self, army = None):
         super().__init__(army)
-        self.__movs_defending = []
+        self.allowed_movs = []
+        self.admin_obj = AdminObjetives()
 
 
-    # propiedad movs_defending
-    @property
-    def movs_defending(self) -> list[MovPiece]:
-        return self.__movs_defending
-    
-    @movs_defending.setter
-    def movs_defending(self, movs: list[MovPiece]) -> None:
-        self.__movs_defending = movs
-
-
-    # propiedad in_defense
-    @property
-    def in_defense(self) -> bool: 
-        return self.__in_defense
-
-    @in_defense.setter
-    def in_defense(self, value: bool) -> None: 
-        self.__in_defense = value
-
-    
     def spread_influence(self, board: "Board") -> None: 
         self.update_presence(board)
 
@@ -265,11 +265,11 @@ class PieceChess(EntityChess):
     def coord_is_objetive(self, coord: Coord, value: str) -> bool: 
         data = (coord, value)
 
-        if self.in_defense:
+        if self.in_still:
             if self.in_hacke:
                 return False
             
-            for mov in self.__movs_defending:
+            for mov in self.allowed_movs:
                 if not mov in self.admin_obj.list_movs:
                     continue
                 
@@ -293,11 +293,11 @@ class PieceChess(EntityChess):
     def get_coords_objetive(self) -> list[tuple[Coord, str]]: 
         result: list = []
 
-        if self.in_defense:
+        if self.in_still:
             if self.in_hacke:
                 return result
             
-            for mov in self.movs_defending:
+            for mov in self.allowed_movs:
                 if mov in self.admin_obj.get_movs():
                     result += self.admin_obj.get_data_off_mov(mov)
                 

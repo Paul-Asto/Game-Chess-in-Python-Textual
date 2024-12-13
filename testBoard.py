@@ -1,5 +1,5 @@
 from board import Board
-from torre import Torre
+from piece.torre import Torre
 from coord import Coord
 
 

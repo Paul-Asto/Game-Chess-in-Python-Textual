@@ -3,22 +3,22 @@ from constant import OBJ_INVALID, OBJ_EMPTY, OBJ_ENEMY
 
 from coord import Coord
 from mov_piece import MovPiece
-from piece import PieceChess, AdminObjetives, EmptyChess, EntityChess
-
+from piece.piece import PieceChess, EmptyChess, EntityChess
 
 if TYPE_CHECKING:
     from scuare import Scuare
     from board import Board
+    from army import Army
 
 
 
 class Rey(PieceChess):
-    def __init__(self, army = None):
+    def __init__(self, army: "Army" = None):
         super().__init__(army)
 
         self.char = chr(9812)
 
-        self.admin_obj = AdminObjetives(
+        self.admin_obj.add_movs(
             MovPiece(self, (0, 1)),
             MovPiece(self, (0, -1)),
             MovPiece(self, (-1, 0)),
@@ -28,6 +28,7 @@ class Rey(PieceChess):
             MovPiece(self, (1, -1)),
             MovPiece(self, (1, 1)),
         )
+        
 
     def add_objetives(self, board: "Board", mov: MovPiece):
         in_first_scuare: bool = True
@@ -75,8 +76,8 @@ class Rey(PieceChess):
                         if mov.GetOpuesto() == movEnemy and movEnemy.is_spreadable:
                             self.army.pieces_defending.append(ficha_defender)
 
-                            ficha_defender.in_defense = True
-                            ficha_defender.movs_defending = [mov, movEnemy]
+                            ficha_defender.in_still = True
+                            ficha_defender.allowed_movs = [mov, movEnemy]
                             break
 
 
@@ -95,7 +96,7 @@ class Rey(PieceChess):
         
         # Cambiar estado de fichas defensivas anteriores
         for ficha in self.army.pieces_defending:
-            ficha.in_defense = False
+            ficha.in_still = False
         
         self.army.pieces_defending.clear()
 

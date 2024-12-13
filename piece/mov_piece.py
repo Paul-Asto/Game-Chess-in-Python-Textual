@@ -2,7 +2,7 @@ from coord import AbstractCoord
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from piece import PieceChess
+    from piece.piece import PieceChess
 
 
 
