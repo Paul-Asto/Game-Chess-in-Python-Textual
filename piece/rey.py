@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from constant import OBJ_INVALID, OBJ_EMPTY, OBJ_ENEMY
 
 from coord import Coord
-from mov_piece import MovPiece
+from piece.mov_piece import MovPiece
 from piece.piece import PieceChess, EmptyChess, EntityChess
 
 if TYPE_CHECKING:
@@ -28,7 +28,7 @@ class Rey(PieceChess):
             MovPiece(self, (1, -1)),
             MovPiece(self, (1, 1)),
         )
-        
+
 
     def add_objetives(self, board: "Board", mov: MovPiece):
         in_first_scuare: bool = True

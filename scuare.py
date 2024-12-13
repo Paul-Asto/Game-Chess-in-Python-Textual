@@ -1,6 +1,6 @@
 from coord import Coord
 from piece.piece import EntityChess
-from mov_piece import MovPiece
+from piece.mov_piece import MovPiece
     
 
 
@@ -45,20 +45,15 @@ class Scuare:
     - movs_on_prowl (dict[MovPiece, None])        lista de movimientos de fichas que tienen como objetivo este Scuare  \n
     '''
 
-    __coord: Coord
+    coord: Coord
     __ficha: EntityChess
     __movs_on_prowl: dict[MovPiece, None]
 
     def __init__(self, coord: Coord, ficha: EntityChess) -> None      :
-        self.__coord = coord
+        self.coord = coord
         self.ficha = ficha
         self.__movs_on_prowl = {}
 
-    # propiead Coord
-    @property
-    def coord(self) -> Coord: 
-        return self.__coord
-    
 
     # propiedad Ficha
     @property

@@ -1,10 +1,15 @@
-from piece.piece import PieceChess, AdminObjetives
-from mov_piece import MovPiece
+from typing import TYPE_CHECKING
+
+from piece.piece import PieceChess
+from piece.mov_piece import MovPiece
+
+if TYPE_CHECKING:
+    from army import Army
 
 
 
 class Torre(PieceChess):
-    def __init__(self, army = None):
+    def __init__(self, army: "Army" = None):
         super().__init__(army)
         self.char = chr(9814)
 
