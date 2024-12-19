@@ -8,94 +8,29 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from board import Board
+    from piece.piece import Color
 
 
 
 class Army:
-    __in_hacke: bool = False
-    __in_hacke_mate: bool = False
-    __orientacion: int 
-    __clase: str
+    console_color: "Color" = "white"
+    in_hacke: bool = False
+    in_hacke_mate: bool = False
+    orientacion: int = 1
+    clase: str
 
-    __coords_priority: list[Coord, str] 
-    __pieces_defending: list[PieceChess] 
+    coords_priority: list[tuple[Coord, str]] 
+    pieces_defending: list[PieceChess] 
 
-    __rey: Rey 
+    rey: Rey 
     __fichas: dict[Coord, PieceChess]
     __copy_fichas: dict[Coord, PieceChess] 
 
     def __init__(self):
-        self.__coords_priority = []
-        self.__pieces_defending = []
+        self.coords_priority = []
+        self.pieces_defending = []
         self.__copy_fichas = {}
         
-
-
-    # propiedad pieces_defending
-    @property
-    def pieces_defending(self) -> list[PieceChess]:
-        return self.__pieces_defending
-
-
-    # propiedad in_hacke
-    @property
-    def in_hacke(self) -> bool:
-        return self.__in_hacke
-    
-    @in_hacke.setter
-    def in_hacke(self, value: bool) -> None:
-        self.__in_hacke = value
-
-
-    # propiedad in_hacke_mate
-    @property
-    def in_hacke_mate(self) -> bool:
-        return self.__in_hacke_mate
-    
-    @in_hacke_mate.setter
-    def in_hacke_mate(self, value: bool) -> None:
-        self.__in_hacke_mate = value
-
-    
-    # propiedad orientacion
-    @property
-    def orientacion(self) -> int:
-        return self.__orientacion
-    
-    @orientacion.setter
-    def orientacion(self, value: int) -> None:
-        self.__orientacion = value
-
-
-    # propiedad clase
-    @property
-    def clase(self) -> str:
-        return self.__clase
-    
-    @clase.setter
-    def clase(self, value: str) -> None:
-        self.__clase = value
-
-
-    # propiedad rey
-    @property
-    def rey(self) -> Rey:
-        return self.__rey
-    
-    @rey.setter
-    def rey(self, value: Rey) -> None:
-        self.__rey = value
-
-
-    # propiedad coords_priority
-    @property
-    def coords_priority(self) -> list[Coord, str] :
-        return self.__coords_priority
-    
-    @coords_priority.setter
-    def coords_priority(self, value: list[Coord, str] ) -> None:
-        self.__coords_priority = value
-
 
     # propiedad fichas
     @property
@@ -111,11 +46,11 @@ class Army:
         # Busqueda del rey y seteo de army
         for ficha in self.__copy_fichas.values():
             ficha.army = self
+            ficha.console_color = self.console_color
 
             if isinstance(ficha, Rey):
-                self.__rey = ficha
+                self.rey = ficha
                 
-
 
     def init_influence(self, board: "Board") -> None: 
         for _, ficha in self.fichas:
@@ -135,7 +70,8 @@ class Army:
         # Busqueda del rey
         for ficha in self.__copy_fichas.values():
             ficha.army = self
+            ficha.console_color = self.console_color
 
             if isinstance(ficha, Rey):
-                self.__rey = ficha
+                self.rey = ficha
                 

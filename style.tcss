@@ -102,11 +102,12 @@ Block Static{
     border: solid;
 }
 
+/*
 .invalid{
     background: blue;
     border: solid;
 }
-
+*/
 
 .armyBlack{
     color: red;

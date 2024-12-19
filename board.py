@@ -1,4 +1,5 @@
 from constant import CHESS_BOARD_SIZE_X, CHESS_BOARD_SIZE_Y
+from termcolor import colored
 
 from coord import Coord
 from scuare import Scuare
@@ -81,10 +82,39 @@ class Board:
                     Scuare(Coord(y, x), EmptyChess()) 
                     for x in range(self.size_x)
                 ])
-
                 for y in range(self.size_y)
             ])
         
+
+    def __str__(self) -> str:
+        index: int = 8
+        result: str = "\n"
+        result += "____________________________\n"
+        result += f"|          Board            |\n"
+        result += "|___________________________|\n\n"
+        result += "   A  B  C  D  E  F  G  H  \n\n"
+
+        for column in self.content:
+            result += f"{index}  "
+
+            for scuare in column:
+                ficha = scuare.ficha
+                
+                if isinstance(ficha, EmptyChess):
+                    result += "Ｘ "
+                    continue
+                    
+                if isinstance(ficha, PieceChess):
+                    result += f"{colored(ficha.char, ficha.console_color)}  "
+                    continue
+
+            result += f" {index}\n" 
+            index -= 1 
+
+        result += "\n   A  B  C  D  E  F  G  H  \n"
+
+        return result
+
 
     def is_valid_coord(self, coord: Coord) -> bool:
         '''
@@ -143,31 +173,19 @@ class Board:
             self.set_ficha(ficha, coord)
 
 
-
-    def trade_fichas(self, ficha_a: EntityChess, ficha_b: EntityChess) -> None:
-        ficha_a.clear_influence(self)
-        ficha_a.clear_influence(self)
-
-        scuareA:Scuare = ficha_a.scuare
-        scuareB:Scuare = ficha_b.scuare
-
-        scuareA.ficha = ficha_b
-        scuareB.ficha = ficha_a
-
-        scuareA.ficha.spread_influence(self)
-        scuareB.ficha.spread_influence(self)
-
-
-    def fusion_fichas(self, ficha_init: EntityChess, ficha_final: EntityChess) -> None:
-        ficha_init.clear_influence(self)
+    # En desarrollo
+    def trade_fichas(self, ficha_start: EntityChess, ficha_final: EntityChess, gen_empty_in_start: bool) -> None:
+        ficha_start.clear_influence(self)
         ficha_final.clear_influence(self)
 
-        scuare_init:Scuare = ficha_init.scuare
-        scuare_final:Scuare = ficha_final.scuare
+        scuare_init: Scuare = ficha_start.scuare
+        scuare_final: Scuare = ficha_final.scuare
 
-        ficha_final.scuare = scuare_init
-        scuare_init.ficha = EmptyChess()
-        scuare_final.ficha = ficha_init
+        scuare_init.ficha = ficha_final
+        scuare_final.ficha = ficha_start
 
-        scuare_init.ficha.spread_influence(self)
-        scuare_final.ficha.spread_influence(self)
+        if gen_empty_in_start:
+            scuare_init.ficha = EmptyChess()
+
+        scuare_init.ficha.update_influence(self)
+        scuare_final.ficha.update_influence(self)

@@ -64,3 +64,4 @@ class Coord(AbstractCoord):
 
     def copy(self):
         return Coord(self.y, self.x)
+    

@@ -63,6 +63,7 @@ class ChessGame:
 
 
     def iteration(self, app: "ChessApp")-> None:
+        self.adminFichas.get_enemy_army_for_class(self.previous_ficha.clase).update_influence_rey(self.tablero)
         self.update_turno()
         app.update_view_turno(self.turno)
 
@@ -74,94 +75,51 @@ class ChessGame:
             app.exit_app()
 
 
-    def trade_ficha(self, ficha_A: EntityChess, ficha_B: EntityChess) -> None:
-        ficha_A.clear_influence(self.tablero)
-        ficha_B.clear_influence(self.tablero)
-
-        scuareA:Scuare = ficha_A.scuare
-        scuareB:Scuare = ficha_B.scuare
-
-        scuareA.ficha = ficha_B
-        scuareB.ficha = ficha_A
-
-        scuareA.ficha.spread_influence(self.tablero)
-        scuareB.ficha.spread_influence(self.tablero)
-
-        self.adminFichas.get_enemy_army_for_class(ficha_A.clase).update_influence_rey(self.tablero)
-
-
-    def fusion_ficha(self, ficha_A: EntityChess, ficha_B: EntityChess, app: "ChessApp") -> None:
-        ficha_A.clear_influence(self.tablero)
-        ficha_B.clear_influence(self.tablero)
-
-        scuareA:Scuare = ficha_A.scuare
-        scuareB:Scuare = ficha_B.scuare
-
-        ficha_B.scuare = scuareA
-        scuareA.ficha = EmptyChess()
-        scuareB.ficha = ficha_A
-
-        scuareA.ficha.spread_influence(self.tablero)
-        scuareB.ficha.spread_influence(self.tablero)
-
-        self.adminFichas.get_enemy_army_for_class(ficha_A.clase).update_influence_rey(self.tablero)
-
-        app.save_view_kill(ficha_B)
-
-
     def set_selected_ficha(self, value: EntityChess) -> None:
         self.previous_ficha = self.selected_ficha
         self.selected_ficha = value
 
 
     def accion_game(self, group_blocks: "GroupBlocks") -> None:
-        # si la ficha anterior es una pieza borra el renderizado de objetivos
-        if isinstance(self.previous_ficha, PieceChess):
+        if isinstance(self.previous_ficha, EmptyChess):
+            if not isinstance(self.selected_ficha, PieceChess):
+                return
+
+            # Si es el turno de la ficha seleccionada, entonces renderiza los objetivos
+            if self.is_equals_turno(self.selected_ficha.clase):
+                group_blocks.addRegisterBlock(self.selected_ficha.get_coords_objetive())
+                return 
+
+
+        elif isinstance(self.previous_ficha, PieceChess):
             group_blocks.clearRegisterBlock(self.previous_ficha.get_coords_objetive())
 
-        match (self.previous_ficha, self.selected_ficha):
-
-            case (EmptyChess(), EmptyChess()):
-                pass    
-
-            case (EmptyChess(), PieceChess()):
-                # Renderiza los objetivos
-                if self.is_equals_turno(self.selected_ficha.clase):
+            # Verifica que  la ficha previa tenga la misma clase que la ficha seleccionada
+            if self.previous_ficha.is_equals_class(self.selected_ficha.clase):
+                # Si la ficha previa es diferente de la ficha seleccionada, entonces renderiza
+                if self.previous_ficha != self.selected_ficha:
                     group_blocks.addRegisterBlock(self.selected_ficha.get_coords_objetive())
                     return
+            
+            # En caso de que la ficha previa sea de diferente clase que la ficha seleccionada,
+            # se sabe que la ficha seleccionada puede ser un empty o una ficha enemiga,
+            #  entonces realiza un movimiento
+            else:
+                movement_performed, is_objetive_enemy = self.previous_ficha.make_mov(self.selected_ficha, self.tablero)
 
-                self.set_selected_ficha(EmptyChess())
-
-            case (PieceChess(), EmptyChess()):
-                # Se realiza un movimiento de fichas
-                if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, OBJ_EMPTY):
-                    self.trade_ficha(self.previous_ficha, self.selected_ficha)
+                if movement_performed:
                     group_blocks.update_view_block_off_coord(self.previous_ficha.coord, self.selected_ficha.coord)
+                    app: "ChessApp" = group_blocks.app
 
-                    self.iteration(group_blocks.app)
+                    if is_objetive_enemy:
+                        app.save_view_kill(self.selected_ficha)
                     
+                    self.iteration(app)  
 
-            case (PieceChess(), PieceChess()):
-                # No hace nada si se selecciona la misma ficha 2 veces
-                if self.previous_ficha == self.selected_ficha:
-                    self.set_selected_ficha(EmptyChess())
-                    return
 
-                # se realiza una fusion de fichas
-                if self.previous_ficha.coord_is_objetive(self.selected_ficha.coord, OBJ_ENEMY):
-                    self.fusion_ficha(self.previous_ficha, self.selected_ficha, group_blocks.app)
-                    group_blocks.update_view_block_off_coord(self.previous_ficha.coord, self.selected_ficha.coord)
-                    self.set_selected_ficha(EmptyChess())
+        # Se setea la ficha seleccionada para que en una futura accion la previous_ficha siempre sea empty
+        self.set_selected_ficha(EmptyChess())
 
-                    self.iteration(group_blocks.app)  
-                    return
-
-                # Renderiza los objetivos
-                if self.is_equals_turno(self.selected_ficha.clase):
-                    group_blocks.addRegisterBlock(self.selected_ficha.get_coords_objetive())
-                    return
-                
-                self.set_selected_ficha(EmptyChess())
 
 
 chess_game: ChessGame = ChessGame()

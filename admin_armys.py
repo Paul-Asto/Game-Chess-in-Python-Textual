@@ -22,6 +22,7 @@ class ArmyBlack(Army):
 
         self.clase = ARMY_BLACK
         self.orientacion = 1 
+        self.console_color = "red"
         
         self.fichas = {
             Coord(1, 0): Peon(self.orientacion),
@@ -50,6 +51,7 @@ class ArmyWhite(Army):
 
         self.clase = ARMY_WHITE
         self.orientacion = -1
+        self.console_color = "blue"
 
         self.fichas = {
             Coord(6, 0): Peon(self.orientacion),
@@ -97,10 +99,14 @@ class AdminArmys:
         self.armys[self.claseB].fichas
 
 
-
     def init_influence(self, board: "Board") -> None:
         self.armys[self.claseA].init_influence(board)
         self.armys[self.claseB].init_influence(board)
+    
+
+    def reStartArmys(self) -> None:
+        self.armys[self.claseA].restart()
+        self.armys[self.claseB].restart()
 
     
     def get_army_for_class(self, clase: str) -> Army:
@@ -113,11 +119,6 @@ class AdminArmys:
 
     def get_enemy_for_class(self, clase: str) -> str:
         return self.related_enemy[clase]
-
-
-    def reStartArmys(self):
-        self.armys[self.claseA].restart()
-        self.armys[self.claseB].restart()
 
 
 

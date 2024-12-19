@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from constant import CHAR_VIEW_CABALLO
 
 from piece.piece import PieceChess
 from piece.mov_piece import MovPiece
@@ -12,7 +13,7 @@ class Caballo(PieceChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
 
-        self.char = chr(9816)
+        self.char = CHAR_VIEW_CABALLO
         
         self.admin_obj.add_movs(
             MovPiece(self, (2, 1)),

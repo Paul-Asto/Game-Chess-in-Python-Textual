@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from constant import CHAR_VIEW_ALFIL
 
 from piece.piece import PieceChess
 from piece.mov_piece import MovPiece
@@ -12,7 +13,7 @@ class Alfil(PieceChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
 
-        self.char = chr(9815)
+        self.char = CHAR_VIEW_ALFIL
 
         self.admin_obj.add_movs(
             MovPiece(self, (-1, -1), True),

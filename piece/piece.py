@@ -1,3 +1,5 @@
+from termcolor import colored
+from typing import Literal, Generator
 from typing import TYPE_CHECKING
 from constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID, NONE_ARMY
 
@@ -11,6 +13,28 @@ if TYPE_CHECKING:
 
 
 
+Color = Literal[
+    "black",
+    "grey",
+    "red",
+    "green",
+    "yellow",
+    "blue",
+    "magenta",
+    "cyan",
+    "light_grey",
+    "dark_grey",
+    "light_red",
+    "light_green",
+    "light_yellow",
+    "light_blue",
+    "light_magenta",
+    "light_cyan",
+    "white",
+]
+
+
+
 class AdminObjetives:
     list_movs: list[MovPiece] 
     store_data: dict[MovPiece, dict[Coord, str]]
@@ -18,8 +42,9 @@ class AdminObjetives:
     def __init__(self, *movs_piece: MovPiece ) -> None:
         self.list_movs = []
         self.store_data = {}
-
+        
         self.add_movs(*movs_piece)
+
 
     def add_movs(self, *movs_piece: MovPiece) -> None:
         for mov in movs_piece:
@@ -38,7 +63,7 @@ class AdminObjetives:
 
     def get_movs(self) -> list[MovPiece]:
         return self.list_movs
-    
+
 
     def get_coords_off_mov(self, mov: MovPiece) -> list[Coord]:
         return list(self.store_data[mov].keys())
@@ -46,28 +71,28 @@ class AdminObjetives:
 
     def get_coords(self) -> list[Coord]:
         result: list[Coord] = []
-
+        
         for mov in self.list_movs:
             result += self.get_coords_off_mov(mov)
-
+        
         return result
 
-    
+
     def get_data_off_mov(self, mov: MovPiece) -> list[tuple[Coord, str]]:
         return list(self.store_data[mov].items())
 
     def get_data(self) -> list[tuple[Coord, str]]:
         result: list[tuple[tuple, str]] = []
-
+        
         for mov in self.list_movs:
             result += self.get_data_off_mov(mov)
-
+        
         return result
 
 
     def add_coord_off_mov(self, mov: MovPiece, coord: Coord, value: str) -> None:
         self.store_data[mov][coord] = value
-    
+
 
     def clear_store_off_mov(self, mov: MovPiece) -> None:
         self.store_data[mov].clear()
@@ -79,7 +104,7 @@ class AdminObjetives:
                 return True
         
         return False
-    
+        
     def coord_in_store_off_mov(self, mov: MovPiece, coord: Coord, value: str) -> bool:
         input: tuple = (coord, value)
 
@@ -92,8 +117,8 @@ class AdminObjetives:
 
 
 class EntityChess:
-
-    char: str = ""
+    console_color: Color = "white"
+    __char: str = ""
     __scuare: "Scuare" = None
     __army: "Army"
     __clase_alter: str = ""
@@ -101,6 +126,19 @@ class EntityChess:
     def __init__(self, army: "Army" = None) -> None:
         self.__army = army
     
+    # propiedad in_hacke
+    @property
+    def char(self) -> str:
+        if self.__char == "":
+            raise Exception("La ficha no tiene un caracter de vista")
+
+        return self.__char
+
+    @char.setter
+    def char(self, value: str) -> None: 
+        self.__char = value
+
+
     # propiedad in_hacke
     @property
     def in_hacke(self) -> bool:
@@ -174,18 +212,26 @@ class EntityChess:
     
     def update_presence(self, board: "Board") -> None: 
         for mov in self.__scuare.movs_on_prowl.copy():
-            mov.ficha.clear_influence_off_mov(board, mov)
-            mov.ficha.add_objetives(board, mov)
+            mov.ficha.update_presence_off_mov(board, mov)
 
+
+    def update_presence_off_mov(self, board: "Board", mov: MovPiece) -> None:
+        self.clear_influence_off_mov(board, mov)
+        self.add_objetives(board, mov)
     
-    def spread_influence(self, board: "Board") -> None: 
-        self.update_presence(board)
+
+    def spread_influence(self, board: "Board") -> None: ...
+
+    def update_influence(self, board: "Board") -> None: ...
 
     
     def clear_influence(self, board: "Board") -> None: ...
 
     def clear_influence_off_mov(self, board: "Board", mov: MovPiece) -> None: ...
 
+    def make_mov(self, ficha_final: "EntityChess") -> tuple[bool, bool]: ...
+
+    def fun_generator_mov(self) -> Generator[tuple[bool, bool], tuple["EntityChess", bool, "Board"], None]: ...
 
 
 class EmptyChess(EntityChess):
@@ -194,29 +240,143 @@ class EmptyChess(EntityChess):
         super().__init__(army)
 
         self.clase = NONE_ARMY
+        self.char = " "
+
+    def __str__(self) -> str:
+        result: str = "\n"
+
+        result += "____________________________\n"
+        result += f"|       EmptyChess          |\n"
+        result += "|___________________________|\n"
+        result += f"{self.scuare}"
+
+        return result
+
+        
+    def update_influence(self, board: "Board") -> None: 
+        self.update_presence(board)
 
 
 
 class PieceChess(EntityChess):
-
     in_still: bool = False
     allowed_movs: list[MovPiece]
-
     admin_obj: AdminObjetives
+
+    __generator_mov: Generator[tuple[bool, bool], tuple[EntityChess, bool, "Board"], None]
+
 
     def __init__(self, army = None):
         super().__init__(army)
         self.allowed_movs = []
         self.admin_obj = AdminObjetives()
 
+    @property
+    def generator_mov(self) -> Generator[tuple[bool, bool], tuple[EntityChess, bool, "Board"], None]:
+        try:
+            # verifica si el atributo generador ya se inicio
+            self.__generator_mov
+
+        except AttributeError:
+            self.__generator_mov = self.fun_generator_mov()
+            # Generador en espera de parametros
+            next(self.__generator_mov)
+
+        return self.__generator_mov
+
+
+    def __str__(self) -> str:
+        result: str = "\n"
+
+        result += "____________________________\n"
+        result += f"|{colored(f"{self.__class__.__name__}({self.char} )".center(27), self.console_color)}|\n"
+        result += f"|{f"  Clase: {self.clase}".ljust(27)}|\n"
+        result += f"|{f"  In Hacke: {self.in_hacke}".ljust(27)}|\n"
+        result += f"|{f"  In still: {self.in_still}".ljust(27)}|\n"
+
+        if self.in_still:
+            allowed_mov_str: str = ""
+
+            for mov in self.allowed_movs:
+                allowed_mov_str += f"{str(mov.value)}, "
+
+            result += f"|{f"  Allowed movs: [{allowed_mov_str}]".ljust(27)}|\n"
+
+        result += "|                           |\n" 
+
+        tablero_str: list[list[str]] = [["Ｘ " for _ in range(8)] for _ in range(8)] 
+
+        y, x = self.coord
+        tablero_str[y][x] = colored(f"{self.char}  ", self.console_color)
+
+        for coord, tipo in self.get_coords_objetive():
+            color: Color 
+
+            if tipo == OBJ_EMPTY: color = "green"
+            elif tipo == OBJ_ENEMY: color = "red"
+            elif tipo == OBJ_INVALID: color = "blue"
+
+            y, x = coord
+            tablero_str[y][x] = colored("Ｘ ", color)
+
+        for column in tablero_str:
+            result += "|  "
+
+            for data in column: 
+                result += data
+                
+            result += " |\n"
+
+        result += "|                           |\n" 
+        result += "|___________________________|\n"
+        result += f"{self.scuare}"
+    
+        return result
+    
+
+    def make_mov(self, ficha_final: EntityChess, tablero: "Board") -> tuple[bool, bool]:
+        tipo_objetive: str
+        movement_performed: bool = None
+        is_objetive_enemy: bool = None
+
+        if isinstance(ficha_final, PieceChess):
+            tipo_objetive = OBJ_ENEMY
+            is_objetive_enemy = True
+
+        elif isinstance(ficha_final, EmptyChess):
+            tipo_objetive = OBJ_EMPTY
+            is_objetive_enemy = False
+        
+
+        if self.coord_is_objetive(ficha_final.coord, tipo_objetive):
+            movement_performed = True
+            self.generator_mov.send((ficha_final, is_objetive_enemy, tablero))
+
+        else:
+            movement_performed = False
+
+        return movement_performed, is_objetive_enemy
+
+
+    def fun_generator_mov(self) -> Generator[tuple[bool, bool], tuple[EntityChess, bool, "Board"], None]:
+        while True:
+            ficha_final, is_objetive_enemy, tablero = yield 
+            tablero.trade_fichas(self, ficha_final, is_objetive_enemy)
+
+
 
     def spread_influence(self, board: "Board") -> None: 
+        for mov in self.admin_obj.get_movs():
+            self.add_objetives(board, mov)
+
+
+    def update_influence(self, board) -> None:
         self.update_presence(board)
 
         for mov in self.admin_obj.get_movs():
             self.add_objetives(board, mov)
-
     
+
     def clear_influence(self, board: "Board") -> None: 
         for mov in self.admin_obj.get_movs():
             self.clear_influence_off_mov(board, mov)
@@ -263,8 +423,6 @@ class PieceChess(EntityChess):
 
     
     def coord_is_objetive(self, coord: Coord, value: str) -> bool: 
-        data = (coord, value)
-
         if self.in_still:
             if self.in_hacke:
                 return False
@@ -279,7 +437,7 @@ class PieceChess(EntityChess):
             return False
 
         if self.in_hacke:
-            if not data in self.army.coords_priority:
+            if not (coord, value) in self.army.coords_priority:
                 return False
 
             if not self.admin_obj.coord_in_store(coord, value):
@@ -314,4 +472,4 @@ class PieceChess(EntityChess):
 
     
     def add_coord_objetive(self, mov: MovPiece, coord: Coord, tipo: str) -> None: 
-        self.admin_obj.add_coord_off_mov(mov, coord, tipo)
+        self.admin_obj.add_coord_off_mov(mov, coord, tipo)   

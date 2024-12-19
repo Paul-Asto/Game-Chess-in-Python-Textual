@@ -1,7 +1,10 @@
+from termcolor import colored
+
 from coord import Coord
-from piece.piece import EntityChess
+from piece.piece import EntityChess, EmptyChess, PieceChess
 from piece.mov_piece import MovPiece
     
+
 
 
 class Scuare:
@@ -53,6 +56,58 @@ class Scuare:
         self.coord = coord
         self.ficha = ficha
         self.__movs_on_prowl = {}
+
+
+    def __str__(self) -> str:
+        coord_str: str = f"Coord: ({self.coord.y}, {self.coord.x})"
+        clase_str: str = colored(f" class: {self.ficha.clase}".ljust(20), self.ficha.console_color)
+        tablero_str: list[list[str]] = [["Ｘ " for _ in range(8)] for _ in range(8)] 
+        ficha_str: str
+
+        if isinstance(self.ficha, PieceChess):
+            ficha_str = f"{colored(f"{self.ficha.__class__.__name__}({self.ficha.char} )".center(20), self.ficha.console_color)}"
+
+        elif isinstance(self.ficha, EmptyChess):
+            ficha_str = self.ficha.__class__.__name__.center(20)
+        
+        result: str = "____________________________\n"
+        
+        result += "|          Scuare           |\n"
+        result += f"|{coord_str.center(27)}|\n"
+        result += "|  _____________________    |\n"
+        result += "|  |                    |   |\n"
+        result += f"|  |{ficha_str}|   |\n"
+        result += f"|  |{clase_str}|   |\n"
+        result += "|  |____________________|   |\n"
+        result += "|                           |\n"
+
+        tablero_str[self.coord.y][self.coord.x] = colored("◎  ", self.ficha.console_color)
+
+        for mov in self.movs_on_prowl:
+            if mov.is_offensive:
+                ficha: PieceChess = mov.ficha
+                coord: Coord = ficha.coord
+
+                tablero_str[coord.y][coord.x] =  f"{colored(ficha.char, ficha.console_color)}  "
+
+        for column in tablero_str:
+            result += "|  "
+
+            for data in column: 
+                result += data
+
+            result += " |\n"
+        
+        result += "|                           |\n"
+
+        for mov in self.movs_on_prowl:
+            result += "|"
+            result += colored(f"{mov.ficha.__class__.__name__}({mov.ficha.char} ): {mov.ficha.clase}".center(27) , mov.ficha.console_color)
+            result += "|\n"
+
+        result += "|___________________________|\n"
+
+        return result
 
 
     # propiedad Ficha

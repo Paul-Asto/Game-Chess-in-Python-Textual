@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from constant import OBJ_INVALID, OBJ_EMPTY, OBJ_ENEMY
+from constant import OBJ_INVALID, OBJ_EMPTY, OBJ_ENEMY, CHAR_VIEW_REY
 
 from coord import Coord
 from piece.mov_piece import MovPiece
@@ -16,7 +16,7 @@ class Rey(PieceChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
 
-        self.char = chr(9812)
+        self.char = CHAR_VIEW_REY
 
         self.admin_obj.add_movs(
             MovPiece(self, (0, 1)),
