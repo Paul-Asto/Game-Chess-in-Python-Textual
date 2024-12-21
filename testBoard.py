@@ -29,6 +29,7 @@ tablero.set_ficha(p2, Coord(5, 2))
 
 p1.spread_influence(tablero)
 p2.spread_influence(tablero)
+
 space = tablero.get_ficha(Coord(5, 4))
 
 print(tablero)
@@ -37,7 +38,8 @@ print(p2)
 
 print("+++++++++++++++++++++++++++++++++++++++++++++++")
 
-tablero.trade_fichas(p2, space, False)
+p1.make_mov(space, tablero)
+
 print(tablero)
 print(p1)
 print(p2)

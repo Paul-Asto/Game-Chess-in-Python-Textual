@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 from constant import CHAR_VIEW_REINA
 
 from piece.piece import PieceChess
-from piece.mov_piece import MovPiece
+from piece.mov_piece import MovPieceSpreadable
 
 if TYPE_CHECKING:
     from army import Army
@@ -15,12 +15,12 @@ class Reina(PieceChess):
         self.char = CHAR_VIEW_REINA
 
         self.admin_obj.add_movs(
-            MovPiece(self, (0, 1), True),
-            MovPiece(self, (0, -1), True),
-            MovPiece(self, (-1, 0), True),
-            MovPiece(self, (1, 0), True),
-            MovPiece(self, (-1, -1), True),
-            MovPiece(self, (-1, 1), True),
-            MovPiece(self, (1, -1), True),
-            MovPiece(self, (1, 1), True),    
+            MovPieceSpreadable(self, (0, 1)),
+            MovPieceSpreadable(self, (0, -1)),
+            MovPieceSpreadable(self, (-1, 0)),
+            MovPieceSpreadable(self, (1, 0)),
+            MovPieceSpreadable(self, (-1, -1)),
+            MovPieceSpreadable(self, (-1, 1)),
+            MovPieceSpreadable(self, (1, -1)),
+            MovPieceSpreadable(self, (1, 1)),    
         )

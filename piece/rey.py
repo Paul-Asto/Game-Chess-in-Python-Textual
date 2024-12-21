@@ -29,7 +29,7 @@ class Rey(PieceChess):
             MovPiece(self, (1, 1)),
         )
 
-
+    '''
     def add_objetives(self, board: "Board", mov: MovPiece):
         in_first_scuare: bool = True
         registered_defender: bool = False
@@ -90,7 +90,7 @@ class Rey(PieceChess):
 
                 case None:
                     return 
-                
+    '''
 
     def spread_influence(self, board: "Board") -> None:
         
@@ -117,7 +117,7 @@ class Rey(PieceChess):
             scuare: "Scuare" = board.get_scuare(coord)
 
             for mov_prowl in scuare.movs_on_prowl:
-                if (mov_prowl.ficha.clase != self.clase) and mov_prowl.is_offensive:
+                if (mov_prowl.ficha.clase != self.clase) :  #and mov_prowl.is_offensive
                     self.add_coord_objetive(mov, coord, OBJ_INVALID)
                     break
 
@@ -134,7 +134,7 @@ class Rey(PieceChess):
 
             coord = self.coord + mov
 
-            if mov.is_offensive and mov.is_spreadable and board.is_valid_coord(coord):
+            if  board.is_valid_coord(coord):  # mov.is_offensive and mov.is_spreadable and
                 self.admin_obj.add_coord_off_mov(mov, coord, OBJ_INVALID)
             break
 
@@ -164,6 +164,3 @@ class Rey(PieceChess):
 
     def get_coords_objetive(self):
         return self.admin_obj.get_data()
-    
-
-

@@ -53,14 +53,6 @@ class AdminObjetives:
                 self.store_data[mov] = {}
 
 
-    def deleted_movs(self, *movs_piece: MovPiece) -> None:
-        for mov in movs_piece:
-            try: 
-                self.list_movs.remove(mov) 
-                self.store_data.pop(mov) 
-            except ValueError or KeyError: pass
-
-
     def get_movs(self) -> list[MovPiece]:
         return self.list_movs
 
@@ -209,16 +201,11 @@ class EntityChess:
 
     def add_objetives(self, board: "Board", mov: MovPiece): ...
 
-    
+
     def update_presence(self, board: "Board") -> None: 
-        for mov in self.__scuare.movs_on_prowl.copy():
-            mov.ficha.update_presence_off_mov(board, mov)
-
-
-    def update_presence_off_mov(self, board: "Board", mov: MovPiece) -> None:
-        self.clear_influence_off_mov(board, mov)
-        self.add_objetives(board, mov)
-    
+        for mov in self.scuare.movs_on_prowl.copy():
+            mov.ficha.clear_influence_off_mov(board, mov)
+            mov.ficha.add_objetives(board, mov)
 
     def spread_influence(self, board: "Board") -> None: ...
 
@@ -231,7 +218,6 @@ class EntityChess:
 
     def make_mov(self, ficha_final: "EntityChess") -> tuple[bool, bool]: ...
 
-    def fun_generator_mov(self) -> Generator[tuple[bool, bool], tuple["EntityChess", bool, "Board"], None]: ...
 
 
 class EmptyChess(EntityChess):
@@ -263,26 +249,10 @@ class PieceChess(EntityChess):
     allowed_movs: list[MovPiece]
     admin_obj: AdminObjetives
 
-    __generator_mov: Generator[tuple[bool, bool], tuple[EntityChess, bool, "Board"], None]
-
-
     def __init__(self, army = None):
         super().__init__(army)
         self.allowed_movs = []
         self.admin_obj = AdminObjetives()
-
-    @property
-    def generator_mov(self) -> Generator[tuple[bool, bool], tuple[EntityChess, bool, "Board"], None]:
-        try:
-            # verifica si el atributo generador ya se inicio
-            self.__generator_mov
-
-        except AttributeError:
-            self.__generator_mov = self.fun_generator_mov()
-            # Generador en espera de parametros
-            next(self.__generator_mov)
-
-        return self.__generator_mov
 
 
     def __str__(self) -> str:
@@ -347,22 +317,21 @@ class PieceChess(EntityChess):
             tipo_objetive = OBJ_EMPTY
             is_objetive_enemy = False
         
-
         if self.coord_is_objetive(ficha_final.coord, tipo_objetive):
             movement_performed = True
-            self.generator_mov.send((ficha_final, is_objetive_enemy, tablero))
+            mov_current: MovPiece
+
+            for mov in ficha_final.scuare.movs_on_prowl:
+                if mov.ficha == self:
+                    mov_current = mov
+                    break
+            
+            mov_current.execute(tablero, ficha_final, is_objetive_enemy)
 
         else:
             movement_performed = False
 
         return movement_performed, is_objetive_enemy
-
-
-    def fun_generator_mov(self) -> Generator[tuple[bool, bool], tuple[EntityChess, bool, "Board"], None]:
-        while True:
-            ficha_final, is_objetive_enemy, tablero = yield 
-            tablero.trade_fichas(self, ficha_final, is_objetive_enemy)
-
 
 
     def spread_influence(self, board: "Board") -> None: 
@@ -390,36 +359,7 @@ class PieceChess(EntityChess):
 
     
     def add_objetives(self, board: "Board", mov: MovPiece) -> None: 
-        coord_actual: Coord = self.coord + mov
-        ficha: EntityChess
-
-        while True:
-            ficha = board.get_ficha(coord_actual)
-
-            match ficha:
-                case PieceChess():
-                    condition: bool = mov.is_offensive and not self.is_equals_class(ficha.clase)
-                    tipo: str = OBJ_ENEMY if condition else OBJ_INVALID
-
-                    self.add_coord_objetive(mov, coord_actual, tipo)
-                    ficha.add_mov_prowl(mov)
-                    break
-
-                case EmptyChess():
-                    condition: bool = mov.is_occupiable
-                    tipo: str = OBJ_EMPTY if condition else OBJ_INVALID
-
-                    self.add_coord_objetive(mov, coord_actual, tipo)
-                    ficha.add_mov_prowl(mov)
-
-                case None:
-                    break
-                
-
-            if not mov.is_spreadable:
-                break
-
-            coord_actual += mov
+        mov.register(board)
 
     
     def coord_is_objetive(self, coord: Coord, value: str) -> bool: 

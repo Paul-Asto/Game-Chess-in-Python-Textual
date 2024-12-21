@@ -84,11 +84,11 @@ class Scuare:
         tablero_str[self.coord.y][self.coord.x] = colored("◎  ", self.ficha.console_color)
 
         for mov in self.movs_on_prowl:
-            if mov.is_offensive:
-                ficha: PieceChess = mov.ficha
-                coord: Coord = ficha.coord
+        
+            ficha: PieceChess = mov.ficha
+            coord: Coord = ficha.coord
 
-                tablero_str[coord.y][coord.x] =  f"{colored(ficha.char, ficha.console_color)}  "
+            tablero_str[coord.y][coord.x] =  f"{colored(ficha.char, ficha.console_color)}  "
 
         for column in tablero_str:
             result += "|  "
