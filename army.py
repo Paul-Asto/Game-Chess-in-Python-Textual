@@ -7,6 +7,8 @@ from piece.piece import PieceChess
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from chessApp import ChessApp
+    from piece.peon import Peon
     from board import Board
     from piece.piece import Color
 
@@ -25,6 +27,8 @@ class Army:
     rey: Rey 
     __fichas: dict[Coord, PieceChess]
     __copy_fichas: dict[Coord, PieceChess] 
+
+    peon_passant: "Peon" = None
 
     def __init__(self):
         self.coords_priority = []
@@ -51,6 +55,21 @@ class Army:
             if isinstance(ficha, Rey):
                 self.rey = ficha
                 
+    
+    def set_peon_passant(self, peon: PieceChess) -> None:
+        self.peon_passant = peon
+
+    
+    def delete_peon_passant(self, tablero: "Board", app: "ChessApp") -> None:
+        if self.peon_passant == None:
+            return
+        
+        self.peon_passant.is_passant = False
+        self.peon_passant.update_presence(tablero)
+        self.peon_passant = None
+
+        app.tablero.update_view_blocks()
+
 
     def init_influence(self, board: "Board") -> None: 
         for _, ficha in self.fichas:

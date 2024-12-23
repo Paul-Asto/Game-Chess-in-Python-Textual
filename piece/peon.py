@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING, Generator
 from constant import CHAR_VIEW_PEON, OBJ_ENEMY
 
 from piece.piece import PieceChess
-from piece.mov_piece import MovPiecePeon, MovPiecePeonDoubleFrontal, MovPiecePeonFrontal
+from piece.mov_piece import  MovPeonDoubleFrontal, MovPeonFrontal, MovPeonDiagonal, MovPeonPassant
 from coord import Coord
 
 if TYPE_CHECKING:
@@ -13,20 +13,43 @@ if TYPE_CHECKING:
 
 class Peon(PieceChess):
     orientacion: int
-    initial_double_mov: MovPiecePeonDoubleFrontal
-    frontal_mov: MovPiecePeonFrontal
+    is_passant: bool = False
+
+    double_frontal_mov: MovPeonDoubleFrontal
+    frontal_mov: MovPeonFrontal
+    diagonal_left_mov: MovPeonDiagonal
+    diagonal_right_mov: MovPeonDiagonal
+    passant_left_mov: MovPeonPassant
+    passant_right_mov: MovPeonPassant
 
     def __init__(self, orientacion: int , army: "Army" = None):
         super().__init__(army)
         
         self.char = CHAR_VIEW_PEON
         self.orientacion = orientacion
-        self.initial_double_mov = MovPiecePeonDoubleFrontal(self, (self.orientacion * 2, 0), is_offensive = False)
-        self.frontal_mov =  MovPiecePeonFrontal(self, (self.orientacion, 0), is_offensive = False)
+
+        self.double_frontal_mov = MovPeonDoubleFrontal(self, (self.orientacion * 2, 0))
+        self.frontal_mov =  MovPeonFrontal(self, (self.orientacion, 0))
+
+        self.diagonal_left_mov = MovPeonDiagonal(self, (self.orientacion, -1))
+        self.diagonal_right_mov = MovPeonDiagonal(self, (self.orientacion, 1))
+
+        self.passant_left_mov = MovPeonPassant(self, (0, -1))
+        self.passant_right_mov = MovPeonPassant(self, (0, 1))
+
+        self.diagonal_left_mov.mov_off_passant = self.passant_left_mov
+        self.diagonal_right_mov.mov_off_passant = self.passant_right_mov
+
+        self.passant_left_mov.mov_off_final_position = self.diagonal_left_mov
+        self.passant_right_mov.mov_off_final_position = self.diagonal_right_mov
     
         self.admin_obj.add_movs(
-            MovPiecePeon(self, (self.orientacion, -1), is_occupiable = False),
-            MovPiecePeon(self, (self.orientacion, 1), is_occupiable = False),
             self.frontal_mov,
-            self.initial_double_mov,
+            self.double_frontal_mov,
+            
+            self.diagonal_left_mov,
+            self.diagonal_right_mov,
+
+            self.passant_left_mov,
+            self.passant_right_mov,
         )

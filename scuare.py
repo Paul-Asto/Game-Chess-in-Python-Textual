@@ -134,7 +134,7 @@ class Scuare:
         self.__movs_on_prowl[mov] = None
 
     
-    def deleted__mov_prowl(self, mov: MovPiece)-> None: 
+    def deleted_mov_prowl(self, mov: MovPiece)-> None: 
         '''
         Elimina una clase MovPiece al diccionario movs_on_prowl
         '''

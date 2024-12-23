@@ -12,6 +12,9 @@ if TYPE_CHECKING:
 
 
 class MovPiece(AbstractCoord):
+    is_spreadable: bool = False
+    is_offensive: bool = True
+    is_occupiable: bool = True
 
     def __init__(self, ficha: "PieceChess", mov: tuple) -> None:
         super().__init__(mov[0], mov[1])
@@ -56,15 +59,24 @@ class MovPiece(AbstractCoord):
         ficha.add_mov_prowl(self)
 
 
+    def clear_register(self, board: "Board") -> None:
+        for coord in self.ficha.admin_obj.get_coords_off_mov(self):
+            board.get_scuare(coord).deleted_mov_prowl(self)
+
+        self.ficha.admin_obj.clear_store_off_mov(self)
+
+
     def execute(self, board: "Board", ficha_enemy: "EntityChess", is_kiler_mov: bool) -> None:
         board.trade_fichas(self.ficha, ficha_enemy, is_kiler_mov)
 
 
 
 class MovPieceSpreadable(MovPiece):
-
+    
     def __init__(self, ficha: "PieceChess", mov: tuple) -> None:
         super().__init__(ficha, mov)
+        
+        self.is_spreadable = True
 
 
     def register(self, board: "Board") -> None:
@@ -97,11 +109,8 @@ class MovPieceSpreadable(MovPiece):
 class MovPiecePeon(MovPiece):
     ficha: "Peon"
 
-    def __init__(self, ficha: "Peon", mov: tuple, is_occupiable: bool = True, is_offensive: bool = True) -> None:
+    def __init__(self, ficha: "Peon", mov: tuple) -> None:
         super().__init__(ficha, mov)
-
-        self.is_occupiable: bool = is_occupiable
-        self.is_offensive: bool = is_offensive
 
 
     def handle_register_piece(self, ficha: "PieceChess") -> None:
@@ -121,15 +130,17 @@ class MovPiecePeon(MovPiece):
     
 
     def execute(self, board: "Board", ficha_enemy: "EntityChess", is_kiler_mov: bool) -> None:
-        self.ficha.initial_double_mov.is_active = False
+        self.ficha.double_frontal_mov.is_active = False
         super().execute(board, ficha_enemy, is_kiler_mov)
 
 
 
-class MovPiecePeonFrontal(MovPiecePeon):
+class MovPeonFrontal(MovPiecePeon):
 
-    def __init__(self, ficha: "Peon", mov: tuple, is_occupiable: bool = True, is_offensive: bool = True):
-        super().__init__(ficha, mov, is_occupiable, is_offensive)
+    def __init__(self, ficha: "Peon", mov: tuple):
+        super().__init__(ficha, mov)
+
+        self.is_offensive = False
 
 
     def register(self, board: "Board") -> None:
@@ -143,22 +154,24 @@ class MovPiecePeonFrontal(MovPiecePeon):
 
         if isinstance(ficha, PieceChess):
             self.handle_register_piece(ficha)
-            self.ficha.clear_influence_off_mov(board, self.ficha.initial_double_mov)
+            self.ficha.double_frontal_mov.clear_register(board)
 
         elif isinstance(ficha, EmptyChess):
             self.handle_register_empty(ficha)
 
-            if self.ficha.initial_double_mov.is_active:
-                self.ficha.initial_double_mov.register(board)
+            if self.ficha.double_frontal_mov.is_active:
+                self.ficha.double_frontal_mov.register(board)
 
 
 
-class MovPiecePeonDoubleFrontal(MovPiecePeon):
+class MovPeonDoubleFrontal(MovPiecePeon):
+    is_active: bool
 
-    def __init__(self, ficha: "Peon", mov: tuple, is_occupiable: bool = True, is_offensive: bool = True):
-        super().__init__(ficha, mov, is_occupiable, is_offensive)
+    def __init__(self, ficha: "Peon", mov: tuple):
+        super().__init__(ficha, mov)
 
-        self.is_active: bool = True
+        self.is_active = True
+        self.is_offensive = False
 
 
     def register(self, board: "Board") -> None:
@@ -174,11 +187,66 @@ class MovPiecePeonDoubleFrontal(MovPiecePeon):
 
         super().register(board)
 
+    
+    def execute(self, board: "Board", ficha_enemy: "PieceChess", is_kiler_mov: bool) -> None:
+        self.ficha.is_passant = True
+        self.ficha.army.set_peon_passant(self.ficha)
+        
+        super().execute(board, ficha_enemy, is_kiler_mov)
 
 
-class MovPiecePassant(MovPiece):
-    def __init__(self, ficha, mov):
+
+
+class MovPeonPassant(MovPiecePeon):
+    mov_off_final_position: "MovPeonDiagonal"
+
+    def __init__(self, ficha: "PieceChess", mov: tuple) -> None:
         super().__init__(ficha, mov)
+
+    
+    def register(self, board: "Board") -> None:
+        coord: Coord = self.ficha.coord + self
+        ficha: EntityChess = board.get_ficha(coord)
+
+        if ficha is None:
+            return
+        
+        self.ficha.add_coord_objetive(self, ficha.coord, OBJ_INVALID)
+        ficha.add_mov_prowl(self)
+        
+        from piece.peon import Peon
+
+        if isinstance(ficha, Peon):
+            if ficha.is_passant:
+                ficha_in_final_passant: EntityChess = board.get_ficha(self.ficha.coord + self.mov_off_final_position)
+            
+                self.ficha.add_coord_objetive(self.mov_off_final_position, ficha_in_final_passant.coord, OBJ_EMPTY)
+                ficha_in_final_passant.add_mov_prowl(self.mov_off_final_position)
+            
+            else:
+                self.mov_off_final_position.register(board)
+
+
+
+class MovPeonDiagonal(MovPiecePeon):
+    mov_off_passant: "MovPeonPassant"
+
+    def __init__(self, ficha: "PieceChess", mov: tuple) -> None:
+        super().__init__(ficha, mov)
+        
+        self.is_occupiable = False
+
+    def execute(self, board: "Board", ficha_enemy: "EntityChess", is_kiler_mov: bool) -> None:
+        if is_kiler_mov:
+            super().execute(board, ficha_enemy, is_kiler_mov)
+        
+        else:
+            ficha_in_passant: EntityChess = board.get_ficha(self.ficha.coord + self.mov_off_passant)
+            self.mov_off_passant.execute(board, ficha_in_passant, True)
+
+            ficha_in_final_passant: EntityChess = board.get_ficha(self.ficha.coord + self.ficha.frontal_mov)
+            self.ficha.frontal_mov.execute(board, ficha_in_final_passant, False)
+
 
 
 

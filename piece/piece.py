@@ -199,13 +199,10 @@ class EntityChess:
         self.scuare.add_mov_prowl(mov)
 
 
-    def add_objetives(self, board: "Board", mov: MovPiece): ...
-
-
     def update_presence(self, board: "Board") -> None: 
         for mov in self.scuare.movs_on_prowl.copy():
-            mov.ficha.clear_influence_off_mov(board, mov)
-            mov.ficha.add_objetives(board, mov)
+            mov.clear_register(board)
+            mov.register(board)
 
     def spread_influence(self, board: "Board") -> None: ...
 
@@ -214,7 +211,6 @@ class EntityChess:
     
     def clear_influence(self, board: "Board") -> None: ...
 
-    def clear_influence_off_mov(self, board: "Board", mov: MovPiece) -> None: ...
 
     def make_mov(self, ficha_final: "EntityChess") -> tuple[bool, bool]: ...
 
@@ -232,7 +228,7 @@ class EmptyChess(EntityChess):
         result: str = "\n"
 
         result += "____________________________\n"
-        result += f"|       EmptyChess          |\n"
+        result += "|       EmptyChess          |\n"
         result += "|___________________________|\n"
         result += f"{self.scuare}"
 
@@ -336,30 +332,17 @@ class PieceChess(EntityChess):
 
     def spread_influence(self, board: "Board") -> None: 
         for mov in self.admin_obj.get_movs():
-            self.add_objetives(board, mov)
+            mov.register(board)
 
 
     def update_influence(self, board) -> None:
         self.update_presence(board)
-
-        for mov in self.admin_obj.get_movs():
-            self.add_objetives(board, mov)
+        self.spread_influence(board)
     
 
     def clear_influence(self, board: "Board") -> None: 
         for mov in self.admin_obj.get_movs():
-            self.clear_influence_off_mov(board, mov)
-
-    
-    def clear_influence_off_mov(self, board: "Board", mov: MovPiece) -> None: 
-        for coord in self.admin_obj.get_coords_off_mov(mov):
-            board.get_scuare(coord).deleted__mov_prowl(mov)
-
-        self.admin_obj.clear_store_off_mov(mov)
-
-    
-    def add_objetives(self, board: "Board", mov: MovPiece) -> None: 
-        mov.register(board)
+            mov.clear_register(board)
 
     
     def coord_is_objetive(self, coord: Coord, value: str) -> bool: 

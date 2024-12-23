@@ -63,7 +63,11 @@ class ChessGame:
 
 
     def iteration(self, app: "ChessApp")-> None:
-        self.adminFichas.get_enemy_army_for_class(self.previous_ficha.clase).update_influence_rey(self.tablero)
+        army_next = self.adminFichas.get_enemy_army_for_class(self.previous_ficha.clase)
+
+        army_next.update_influence_rey(self.tablero)
+        army_next.delete_peon_passant(self.tablero, app)
+        
         self.update_turno()
         app.update_view_turno(self.turno)
 
