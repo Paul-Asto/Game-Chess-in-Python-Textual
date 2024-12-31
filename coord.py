@@ -32,12 +32,17 @@ class Coord(AbstractCoord):
         
         return Coord(self.y - other.y, self.x - other.x)
     
-    def __add__(self, other):
+    def __add__(self, other: "Coord"):
         if not issubclass(type(other), AbstractCoord):
             return NotImplemented
         
         return Coord(self.y + other.y, self.x + other.x)
     
+
+    def move(self, mov: tuple[int, int]) -> "Coord":
+        return Coord(self.y + mov[0], self.x + mov[1])
+
+
     def indexMax(self):
         y, x = self.value
         result: int = None

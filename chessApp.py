@@ -62,7 +62,6 @@ class Block(Widget):
 
 
 
-
 class GroupBlocks(Vertical):
     def __init__(self, children: list[Block]) -> None:
         super().__init__()
@@ -108,7 +107,7 @@ class ChessApp(App):
                 yield Static("AJEDREZ vs IA")
 
             with Widget(classes= "content"):
-                self.turno = Static("Turno de los azules", classes="turno-azul")
+                self.turno = Static("Turno de los azules", classes= "turno-azul")
                 yield self.turno
 
             with Horizontal():
@@ -118,7 +117,7 @@ class ChessApp(App):
                 self.tablero = GroupBlocks(
                     children = [
                         Block(
-                            classes= next(generator_class_widget),
+                            classes = next(generator_class_widget),
                             coord = next(generator_coord_widget),
                         ) for _ in range(CHESS_BOARD_SIZE_Y * CHESS_BOARD_SIZE_X)]
                 )
@@ -129,10 +128,10 @@ class ChessApp(App):
                 yield self.killFichasRojas
 
             with Widget(classes= "content"):
-                yield Button("REINICIAR", id="btn-reiniciar")
+                yield Button("REINICIAR", id= "btn-reiniciar")
 
             with Widget(classes= "content"):
-                yield Button("SALIR", id="btn-salir")
+                yield Button("SALIR", id= "btn-salir")
 
 
     @on(Button.Pressed, "#btn-reiniciar")
@@ -175,8 +174,7 @@ class ChessApp(App):
         else:
             self.killFichasAzules.mount(Static(ficha.char))
     
+
     def clear_view_kill(self):
         self.killFichasAzules.remove_children(Static)
         self.killFichasRojas.remove_children(Static)
-            
-

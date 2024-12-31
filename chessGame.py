@@ -67,6 +67,7 @@ class ChessGame:
 
         army_next.update_influence_rey(self.tablero)
         army_next.delete_peon_passant(self.tablero, app)
+        app.tablero.update_view_blocks()
         
         self.update_turno()
         app.update_view_turno(self.turno)

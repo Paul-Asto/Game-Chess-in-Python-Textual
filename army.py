@@ -16,8 +16,13 @@ if TYPE_CHECKING:
 
 class Army:
     console_color: "Color" = "white"
+
     in_hacke: bool = False
     in_hacke_mate: bool = False
+
+    active_enrroque_corto: bool = True
+    active_enrroque_largo: bool = True
+
     orientacion: int = 1
     clase: str
 

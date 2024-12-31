@@ -5,6 +5,7 @@ from constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID
 
 if TYPE_CHECKING:
     from peon import Peon
+    from rey import Rey 
     from board import Board
     from coord import Coord
     from piece.piece import PieceChess, EntityChess, EmptyChess
@@ -196,12 +197,12 @@ class MovPeonDoubleFrontal(MovPiecePeon):
 
 
 
-
 class MovPeonPassant(MovPiecePeon):
     mov_off_final_position: "MovPeonDiagonal"
 
     def __init__(self, ficha: "PieceChess", mov: tuple) -> None:
         super().__init__(ficha, mov)
+        self.is_offensive = False
 
     
     def register(self, board: "Board") -> None:
@@ -219,10 +220,10 @@ class MovPeonPassant(MovPiecePeon):
         if isinstance(ficha, Peon):
             if ficha.is_passant:
                 ficha_in_final_passant: EntityChess = board.get_ficha(self.ficha.coord + self.mov_off_final_position)
-            
+
                 self.ficha.add_coord_objetive(self.mov_off_final_position, ficha_in_final_passant.coord, OBJ_EMPTY)
                 ficha_in_final_passant.add_mov_prowl(self.mov_off_final_position)
-            
+
             else:
                 self.mov_off_final_position.register(board)
 
@@ -249,27 +250,186 @@ class MovPeonDiagonal(MovPiecePeon):
 
 
 
-
 class MovPieceRey(MovPiece):
 
-    def __init__(self, ficha, mov):
+    def __init__(self, ficha: "Rey", mov):
         super().__init__(ficha, mov)
     
-    def register(self):
-        pass
+    def register(self, board: "Board") -> None:
+        coord: Coord = self.ficha.coord + self
+        ficha: EntityChess = board.get_ficha(coord)
 
-    def execute(self):
-        pass
+        if ficha is None:
+            return
+        
+        from piece.piece import PieceChess, EntityChess, EmptyChess
 
+        if isinstance(ficha, PieceChess):
+            self.handle_register_piece(ficha)
 
+        elif isinstance(ficha, EmptyChess):
+            self.handle_register_empty(ficha)
 
-class MovPieceReyEnrroque(MovPiece):
+        # Descartar opciones de coordenadas en amenaza
+        for mov in ficha.scuare.movs_on_prowl:
+            if self.ficha.is_equals_class(mov.ficha.clase):
+                continue
+            
+            if mov.is_offensive:
+                self.ficha.add_coord_objetive(self, ficha.coord, OBJ_INVALID)
+        
+        ficha_defender: PieceChess = None
 
-    def __init__(self, ficha, mov):
-        super().__init__(ficha, mov)
+        # search ficha defender
+        while True:
+            if ficha is None:
+                break
+            
+            if not isinstance(ficha, PieceChess):
+                coord += self
+                ficha = board.get_ficha(coord)
+                continue
+
+            if not self.ficha.is_equals_class(ficha.clase):
+                break
+        
+            ficha_defender = ficha
+            break
+
+        if ficha_defender is None:
+            return
+        
+        # search ficha enemiga
+        while True:
+            coord += self
+            ficha = board.get_ficha(coord)
+
+            if ficha is None:
+                break
+            
+            if not isinstance(ficha, PieceChess):
+                continue
+
+            if self.ficha.is_equals_class(ficha.clase):
+                break
+
+            for mov_enemy in ficha.admin_obj.get_movs():
+                if self.GetOpuesto() == mov_enemy and mov_enemy.is_spreadable:
+                    self.ficha.army.pieces_defending.append(ficha_defender)
+
+                    ficha_defender.in_still = True
+                    ficha_defender.allowed_movs = [self, mov_enemy]
+                    break
     
-    def register(self):
-        pass
 
-    def execute(self):
-        pass
+    def execute(self, board: "Board", ficha_enemy: "PieceChess", is_kiler_mov: bool) -> None:
+        super().execute(board, ficha_enemy, is_kiler_mov)
+
+        self.ficha.army.active_enrroque_corto = False
+        self.ficha.army.active_enrroque_largo = False
+
+
+
+class MovReyEnrroqueCorto(MovPiece):
+
+    def __init__(self, ficha: "PieceChess"):
+        super().__init__(ficha, (0, 2))
+    
+    def register(self, board: "Board") -> None:
+        if not self.ficha.army.active_enrroque_corto:
+            return
+        
+        self.clear_register(board)
+        
+        if self.ficha.in_hacke:
+            return
+        
+        empty_1: EntityChess = board.get_ficha(self.ficha.coord.move((0, 1)))
+        is_atacked, _ = empty_1.scuare.is_attacked(self.ficha.clase)
+
+        from piece.piece import PieceChess
+
+        if isinstance(empty_1, PieceChess) or is_atacked:
+            return
+
+        empty_final: EntityChess = board.get_ficha(self.ficha.coord.move((0, 2)))
+        is_atacked, _ = empty_final.scuare.is_attacked(self.ficha.clase)
+                
+        if isinstance(empty_final, PieceChess) or is_atacked:
+            return
+        
+        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, 3)))
+
+        from piece.torre import Torre
+
+        if not isinstance(torre, Torre):
+            self.ficha.army.active_enrroque_corto = False
+            return
+    
+        self.handle_register_empty(empty_final)
+
+        
+    def execute(self, board: "Board", ficha_enemy: "PieceChess", is_kiler_mov: bool) -> None:
+        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, 3)))
+        empty_1: EntityChess = board.get_ficha(self.ficha.coord.move((0, 1)))
+
+        board.trade_fichas(self.ficha, ficha_enemy, is_kiler_mov)
+        board.trade_fichas(torre, empty_1, False)
+
+        self.ficha.army.active_enrroque_corto = False
+
+
+
+class MovReyEnrroqueLargo(MovPiece):
+
+    def __init__(self, ficha: "PieceChess"):
+        super().__init__(ficha, (0, -3))
+    
+    def register(self, board: "Board") -> None:
+        if not self.ficha.army.active_enrroque_largo:
+            return
+        
+        self.clear_register(board)
+        
+        if self.ficha.in_hacke:
+            return
+        
+        empty_1: EntityChess = board.get_ficha(self.ficha.coord.move((0, -1)))
+        is_atacked, _ = empty_1.scuare.is_attacked(self.ficha.clase)
+
+        from piece.piece import PieceChess
+
+        if isinstance(empty_1, PieceChess) or is_atacked:
+            return
+        
+        empty_2: EntityChess = board.get_ficha(self.ficha.coord.move((0, -2)))
+        is_atacked, _ = empty_2.scuare.is_attacked(self.ficha.clase)
+
+        if isinstance(empty_2, PieceChess) or is_atacked:
+            return
+        
+        empty_final: EntityChess = board.get_ficha(self.ficha.coord.move((0, -3)))
+        is_atacked, _ = empty_final.scuare.is_attacked(self.ficha.clase)
+                
+        if isinstance(empty_final, PieceChess) or is_atacked:
+            return
+        
+        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, -4)))
+    
+        from piece.torre import Torre
+
+        if not isinstance(torre, Torre):
+            self.ficha.army.active_enrroque_largo = False
+            return
+
+        self.handle_register_empty(empty_final)
+        
+    
+    def execute(self, board: "Board", ficha_enemy: "PieceChess", is_kiler_mov: bool) -> None:
+        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, -4)))
+        empty_2: EntityChess = board.get_ficha(self.ficha.coord.move((0, -2)))
+
+        board.trade_fichas(self.ficha, ficha_enemy, is_kiler_mov)
+        board.trade_fichas(torre, empty_2, False)
+
+        self.ficha.army.active_enrroque_largo = False

@@ -1,9 +1,12 @@
+from typing import TYPE_CHECKING
 from termcolor import colored
 
 from coord import Coord
 from piece.piece import EntityChess, EmptyChess, PieceChess
-from piece.mov_piece import MovPiece
+
     
+if TYPE_CHECKING:
+    from piece.mov_piece import MovPiece
 
 
 
@@ -45,12 +48,12 @@ class Scuare:
     - Atributos:  \n
     - coord (Coord):                              coordenada  inmutable  \n
     - ficha (EntityChess)                         ficha contenida actualmente en el scuare, el scuare puede cambiar de ficha  \n
-    - movs_on_prowl (dict[MovPiece, None])        lista de movimientos de fichas que tienen como objetivo este Scuare  \n
+    - movs_on_prowl (dict["MovPiece", None])        lista de movimientos de fichas que tienen como objetivo este Scuare  \n
     '''
 
     coord: Coord
     __ficha: EntityChess
-    __movs_on_prowl: dict[MovPiece, None]
+    __movs_on_prowl: dict["MovPiece", None]
 
     def __init__(self, coord: Coord, ficha: EntityChess) -> None      :
         self.coord = coord
@@ -84,11 +87,11 @@ class Scuare:
         tablero_str[self.coord.y][self.coord.x] = colored("◎  ", self.ficha.console_color)
 
         for mov in self.movs_on_prowl:
-        
-            ficha: PieceChess = mov.ficha
-            coord: Coord = ficha.coord
+            if mov.is_offensive:   
+                ficha: PieceChess = mov.ficha
+                coord: Coord = ficha.coord
 
-            tablero_str[coord.y][coord.x] =  f"{colored(ficha.char, ficha.console_color)}  "
+                tablero_str[coord.y][coord.x] =  f"{colored(ficha.char, ficha.console_color)}  "
 
         for column in tablero_str:
             result += "|  "
@@ -123,19 +126,44 @@ class Scuare:
 
     # Propiedad movs_prowl
     @property
-    def movs_on_prowl(self) -> list[MovPiece]:
+    def movs_on_prowl(self) -> list["MovPiece"]:
         return list(self.__movs_on_prowl.keys())
 
 
-    def add_mov_prowl(self, mov: MovPiece) -> None: 
+    def add_mov_prowl(self, mov: "MovPiece") -> None: 
         '''
-        Añade una clase MovPiece al diccionario movs_on_prowl
+        Añade una clase "MovPiece" al diccionario movs_on_prowl
         '''
         self.__movs_on_prowl[mov] = None
 
     
-    def deleted_mov_prowl(self, mov: MovPiece)-> None: 
+    def deleted_mov_prowl(self, mov: "MovPiece")-> None: 
         '''
-        Elimina una clase MovPiece al diccionario movs_on_prowl
+        Elimina una clase "MovPiece" al diccionario movs_on_prowl
         '''
         self.__movs_on_prowl.pop(mov)
+
+    
+    def is_attacked(self, clase: str = None ) -> tuple[bool, "MovPiece"]:
+        '''
+        Devuelve True si el scuare esta siendo atacado por alguna ficha
+        que tenga diferente clase que la clase de la ficha del scuare y 
+        si el movimiento es ofensivo
+        '''
+
+        clase_attacked: str
+
+        if clase == None:
+            clase_attacked = self.ficha.clase
+        
+        else:
+            clase_attacked = clase
+
+        for mov in self.movs_on_prowl:
+            if clase_attacked == mov.ficha.clase:
+                continue
+
+            if mov.is_offensive:
+                return (True, mov)
+
+        return (False, None)
