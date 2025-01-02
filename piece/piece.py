@@ -110,6 +110,8 @@ class AdminObjetives:
 
 class EntityChess:
     console_color: Color = "white"
+
+    str_fen: str = "-"
     __char: str = ""
     __scuare: "Scuare" = None
     __army: "Army"

@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 class Torre(PieceChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
+
+        self.str_fen = "r" 
         self.char = CHAR_VIEW_TORRE
 
         self.admin_obj.add_movs(

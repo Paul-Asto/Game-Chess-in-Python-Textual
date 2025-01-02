@@ -13,6 +13,7 @@ class Caballo(PieceChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
 
+        self.str_fen = "n" 
         self.char = CHAR_VIEW_CABALLO
         
         self.admin_obj.add_movs(

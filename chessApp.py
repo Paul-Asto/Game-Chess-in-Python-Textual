@@ -74,11 +74,11 @@ class GroupBlocks(Vertical):
 
 
     # Funcions UpdateViewBlock
-    def update_view_block_off_coord(self, *list_coord: list[Coord]) -> None:
+    def update_view_block_off_coord(self, *list_coord: Coord) -> None:
         for coord in list_coord:
             self.dict_blocks[coord].update_ficha()
 
-    def update_view_blocks(self):
+    def update_view_blocks(self) -> None:
         for block in self.dict_blocks.values():
             block.update_ficha()
 
@@ -136,13 +136,13 @@ class ChessApp(App):
 
     @on(Button.Pressed, "#btn-reiniciar")
     def restart_app(self):
-        if isinstance(chess_game.selected_ficha, PieceChess):
-            self.tablero.clearRegisterBlock(chess_game.selected_ficha.get_coords_objetive())
+        if isinstance(chess_game.selected_piece, PieceChess):
+            self.tablero.clearRegisterBlock(chess_game.selected_piece.get_coords_objetive())
 
         chess_game.restart_game()
 
         self.tablero.update_view_blocks()
-        self.update_view_turno(chess_game.turno)
+        self.update_view_turno(chess_game.turn)
         self.clear_view_kill()
 
         

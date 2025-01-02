@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 class Reina(PieceChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
+
+        self.str_fen = "q" 
         self.char = CHAR_VIEW_REINA
 
         self.admin_obj.add_movs(

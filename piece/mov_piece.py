@@ -344,6 +344,14 @@ class MovReyEnrroqueCorto(MovPiece):
         if self.ficha.in_hacke:
             return
         
+        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, 3)))
+
+        from piece.torre import Torre
+
+        if not isinstance(torre, Torre):
+            self.ficha.army.active_enrroque_corto = False
+            return
+        
         empty_1: EntityChess = board.get_ficha(self.ficha.coord.move((0, 1)))
         is_atacked, _ = empty_1.scuare.is_attacked(self.ficha.clase)
 
@@ -357,14 +365,6 @@ class MovReyEnrroqueCorto(MovPiece):
                 
         if isinstance(empty_final, PieceChess) or is_atacked:
             return
-        
-        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, 3)))
-
-        from piece.torre import Torre
-
-        if not isinstance(torre, Torre):
-            self.ficha.army.active_enrroque_corto = False
-            return
     
         self.handle_register_empty(empty_final)
 
@@ -377,6 +377,7 @@ class MovReyEnrroqueCorto(MovPiece):
         board.trade_fichas(torre, empty_1, False)
 
         self.ficha.army.active_enrroque_corto = False
+        self.ficha.army.active_enrroque_largo = False
 
 
 
@@ -392,6 +393,14 @@ class MovReyEnrroqueLargo(MovPiece):
         self.clear_register(board)
         
         if self.ficha.in_hacke:
+            return
+        
+        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, -4)))
+    
+        from piece.torre import Torre
+
+        if not isinstance(torre, Torre):
+            self.ficha.army.active_enrroque_largo = False
             return
         
         empty_1: EntityChess = board.get_ficha(self.ficha.coord.move((0, -1)))
@@ -413,14 +422,6 @@ class MovReyEnrroqueLargo(MovPiece):
                 
         if isinstance(empty_final, PieceChess) or is_atacked:
             return
-        
-        torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, -4)))
-    
-        from piece.torre import Torre
-
-        if not isinstance(torre, Torre):
-            self.ficha.army.active_enrroque_largo = False
-            return
 
         self.handle_register_empty(empty_final)
         
@@ -433,3 +434,4 @@ class MovReyEnrroqueLargo(MovPiece):
         board.trade_fichas(torre, empty_2, False)
 
         self.ficha.army.active_enrroque_largo = False
+        self.ficha.army.active_enrroque_corto = False

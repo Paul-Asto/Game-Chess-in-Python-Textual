@@ -25,6 +25,7 @@ class Peon(PieceChess):
     def __init__(self, orientacion: int , army: "Army" = None):
         super().__init__(army)
         
+        self.str_fen = "p" 
         self.char = CHAR_VIEW_PEON
         self.orientacion = orientacion
 

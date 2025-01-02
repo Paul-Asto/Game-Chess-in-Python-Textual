@@ -1,4 +1,4 @@
-from constant import CHESS_BOARD_SIZE_X, CHESS_BOARD_SIZE_Y
+from constant import CHESS_BOARD_SIZE_X, CHESS_BOARD_SIZE_Y, ARMY_WHITE
 from termcolor import colored
 
 from coord import Coord
@@ -85,6 +85,35 @@ class Board:
                 for y in range(self.size_y)
             ])
         
+
+    @property
+    def notation_forsyth_edwards(self) -> str:
+        result: str = ""
+
+        for column in self.content:
+            n_emptys: int = 0
+
+            for scuare in column:
+                piece: EntityChess = scuare.ficha
+
+                if isinstance(piece, EmptyChess):
+                    n_emptys += 1
+                    continue
+
+                if n_emptys != 0:
+                    result += str(n_emptys)
+                    n_emptys = 0
+                
+                piece_fen = piece.str_fen.upper() if piece.clase == ARMY_WHITE else piece.str_fen
+                result += piece_fen
+            
+            if n_emptys != 0:
+                result += str(n_emptys)
+    
+            result += "/"
+
+        return result[: -1]
+
 
     def __str__(self) -> str:
         index: int = 8

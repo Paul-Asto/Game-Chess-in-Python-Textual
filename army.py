@@ -1,7 +1,14 @@
 from copy import deepcopy
 from coord import Coord
 
+from constant import ARMY_BLACK, ARMY_WHITE
+
 from piece.rey import Rey
+from piece.reina import Reina
+from piece.alfil import Alfil
+from piece.torre import Torre
+from piece.peon import Peon
+from piece.caballo import Caballo
 from piece.piece import PieceChess
 
 from typing import TYPE_CHECKING
@@ -99,3 +106,60 @@ class Army:
             if isinstance(ficha, Rey):
                 self.rey = ficha
                 
+
+
+class ArmyBlack(Army):    
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.clase = ARMY_BLACK
+        self.orientacion = 1 
+        self.console_color = "red"
+        
+        self.fichas = {
+            Coord(1, 0): Peon(self.orientacion),
+            Coord(1, 1): Peon(self.orientacion),
+            Coord(1, 2): Peon(self.orientacion),
+            Coord(1, 3): Peon(self.orientacion),
+            Coord(1, 4): Peon(self.orientacion),
+            Coord(1, 5): Peon(self.orientacion),
+            Coord(1, 6): Peon(self.orientacion),
+            Coord(1, 7): Peon(self.orientacion),
+            Coord(0, 0): Torre(),
+            Coord(0, 1): Caballo(),
+            Coord(0, 2): Alfil(),
+            Coord(0, 3): Reina(),
+            Coord(0, 4): Rey(),
+            Coord(0, 5): Alfil(),
+            Coord(0, 6): Caballo(),
+            Coord(0, 7): Torre(),
+        }
+
+
+
+class ArmyWhite(Army):
+    def __init__(self) -> None:
+        super().__init__()
+
+        self.clase = ARMY_WHITE
+        self.orientacion = -1
+        self.console_color = "blue"
+
+        self.fichas = {
+            Coord(6, 0): Peon(self.orientacion),
+            Coord(6, 1): Peon(self.orientacion),
+            Coord(6, 2): Peon(self.orientacion),
+            Coord(6, 3): Peon(self.orientacion),
+            Coord(6, 4): Peon(self.orientacion),
+            Coord(6, 5): Peon(self.orientacion),
+            Coord(6, 6): Peon(self.orientacion),
+            Coord(6, 7): Peon(self.orientacion), 
+            Coord(7, 0): Torre(),
+            Coord(7, 1): Caballo(),
+            Coord(7, 2): Alfil(),
+            Coord(7, 3): Reina(),
+            Coord(7, 4): Rey(),
+            Coord(7, 5): Alfil(),
+            Coord(7, 6): Caballo(),
+            Coord(7, 7): Torre(),
+        }

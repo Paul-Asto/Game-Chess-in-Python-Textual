@@ -17,6 +17,7 @@ class Rey(PieceChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
 
+        self.str_fen = "k" 
         self.char = CHAR_VIEW_REY
 
         self.admin_obj.add_movs(
