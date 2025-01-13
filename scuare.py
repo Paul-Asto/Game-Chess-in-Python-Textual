@@ -1,5 +1,5 @@
 from typing import TYPE_CHECKING
-from termcolor import colored
+from rich.text import Text
 
 from coord import Coord
 from piece.piece import EntityChess, EmptyChess, PieceChess
@@ -61,54 +61,63 @@ class Scuare:
         self.__movs_on_prowl = {}
 
 
-    def __str__(self) -> str:
+    @property
+    def view(self) -> Text:
         coord_str: str = f"Coord: ({self.coord.y}, {self.coord.x})"
-        clase_str: str = colored(f" class: {self.ficha.clase}".ljust(20), self.ficha.console_color)
+        clase_str: str = f" class: {self.ficha.clase}".ljust(20)
         tablero_str: list[list[str]] = [["Ｘ " for _ in range(8)] for _ in range(8)] 
-        ficha_str: str
+        ficha_str: str = ""
 
         if isinstance(self.ficha, PieceChess):
-            ficha_str = f"{colored(f"{self.ficha.__class__.__name__}({self.ficha.char} )".center(20), self.ficha.console_color)}"
+            ficha_str = f"{self.ficha.__class__.__name__}({self.ficha.char} )".center(20)
 
         elif isinstance(self.ficha, EmptyChess):
-            ficha_str = self.ficha.__class__.__name__.center(20)
+            ficha_str= self.ficha.__class__.__name__.center(20)
         
-        result: str = "____________________________\n"
+        result: Text = Text("____________________________\n")
         
-        result += "|          Scuare           |\n"
-        result += f"|{coord_str.center(27)}|\n"
-        result += "|  _____________________    |\n"
-        result += "|  |                    |   |\n"
-        result += f"|  |{ficha_str}|   |\n"
-        result += f"|  |{clase_str}|   |\n"
-        result += "|  |____________________|   |\n"
-        result += "|                           |\n"
+        result.append("|          Scuare           |\n")
+        result.append(f"|{coord_str.center(27)}|\n")
+        result.append("|  _____________________    |\n")
+        result.append("|  |                    |   |\n")
 
-        tablero_str[self.coord.y][self.coord.x] = colored("◎  ", self.ficha.console_color)
+        result.append(f"|  |")
+        result.append(ficha_str, style= f"bold {self.ficha.console_color}")
+        result.append("|   |\n")
+        
+        result.append(f"|  |")
+        result.append(clase_str, style= f"bold {self.ficha.console_color}")
+        result.append("|   |\n")
+
+        result.append("|  |____________________|   |\n")
+        result.append("|                           |\n")
+
+        tablero_str[self.coord.y][self.coord.x] = Text("@  ", f"bold {self.ficha.console_color}")
 
         for mov in self.movs_on_prowl:
             if mov.is_offensive:   
                 ficha: PieceChess = mov.ficha
                 coord: Coord = ficha.coord
 
-                tablero_str[coord.y][coord.x] =  f"{colored(ficha.char, ficha.console_color)}  "
+                tablero_str[coord.y][coord.x] =  Text(f"{ficha.char}  ", f"bold {ficha.console_color}")
 
         for column in tablero_str:
-            result += "|  "
+            result.append("|  ")
 
             for data in column: 
-                result += data
+                result.append(data)
 
-            result += " |\n"
+            result.append(" |\n")
         
-        result += "|                           |\n"
+        result.append("|                           |\n")
 
         for mov in self.movs_on_prowl:
-            result += "|"
-            result += colored(f"{mov.ficha.__class__.__name__}({mov.ficha.char} ): {mov.ficha.clase}".center(27) , mov.ficha.console_color)
-            result += "|\n"
+            if mov.is_offensive:
+                result.append("|")
+                result.append(f"{mov.ficha.__class__.__name__}({mov.ficha.char} ): {mov.ficha.clase}".center(27) , f"bold {mov.ficha.console_color}")
+                result.append("|\n")
 
-        result += "|___________________________|\n"
+        result.append("|___________________________|\n")
 
         return result
 

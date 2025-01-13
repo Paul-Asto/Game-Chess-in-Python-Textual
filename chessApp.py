@@ -1,4 +1,5 @@
 from textual.app import App, on
+from textual.events import Click
 from textual.widget import Widget
 from textual.containers import Vertical, Horizontal
 from textual.widgets import Static, Button, RichLog
@@ -142,8 +143,6 @@ class GroupBlocks(Vertical):
 
         await asyncio.sleep(0.3)
 
-            
-
 
 
 class ChessApp(App):
@@ -152,7 +151,7 @@ class ChessApp(App):
     def compose(self):
         with Horizontal():
             with Widget(classes= "info"):
-                self.info_piece = RichLog(classes= "content_data")
+                self.info_piece = Static(classes= "content_data")
                 yield self.info_piece
 
             with Vertical(classes= "principal"):
@@ -187,7 +186,7 @@ class ChessApp(App):
                     yield Button("SALIR", id= "btn-salir")
             
             with Widget(classes= "info"):
-                self.info_board = Static(str(chess_game.board), classes= "content_data")
+                self.info_board = Static(chess_game.board.view, classes= "content_data")
                 yield self.info_board
 
 
@@ -237,8 +236,7 @@ class ChessApp(App):
         self.killFichasRojas.remove_children(Static)
 
     def update_view_board(self):
-        self.info_board.update(str(chess_game.board))
+        self.info_board.update(chess_game.board.view)
 
     def update_view_piece(self):
-        self.info_piece.clear()
-        self.info_piece.write(str(chess_game.selected_piece))
+        self.info_piece.update(chess_game.selected_piece.view)

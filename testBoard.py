@@ -8,7 +8,13 @@ from piece.peon import Peon
 
 from coord import Coord
 
+from rich.console import Console
+from rich.text import Text
 
+console = Console()
+
+
+texto = Text("ddfdffddf", style="bold red")
 
 
 tablero = Board()
@@ -31,7 +37,9 @@ p2.spread_influence(tablero)
 
 space = tablero.get_ficha(Coord(5, 4))
 
-print(tablero)
+console.print(tablero.view)
+
+'''
 print(p1)
 print(p2)
 
@@ -42,7 +50,7 @@ p1.make_mov(space, tablero)
 print(tablero)
 print(p1)
 print(str(p2))
-
+'''
 
 
 
@@ -66,3 +74,4 @@ def max_value_off_string(data: str) -> int:
 entrada: str = "011101"
 
 print(max_value_off_string(entrada))'''
+

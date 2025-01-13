@@ -1,5 +1,5 @@
-from termcolor import colored
-from typing import Literal, Generator
+from rich.text import Text
+from typing import Literal
 from typing import TYPE_CHECKING
 from constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID, NONE_ARMY
 
@@ -110,6 +110,7 @@ class AdminObjetives:
 
 class EntityChess:
     console_color: Color = "white"
+    view: Text
 
     str_fen: str = "-"
     __char: str = ""
@@ -226,13 +227,14 @@ class EmptyChess(EntityChess):
         self.clase = NONE_ARMY
         self.char = " "
 
-    def __str__(self) -> str:
-        result: str = "\n"
+    @property
+    def view(self) -> Text:
+        result: Text = Text("\n")
 
-        result += "____________________________\n"
-        result += "|       EmptyChess          |\n"
-        result += "|___________________________|\n"
-        result += f"{self.scuare}"
+        result.append("____________________________\n")
+        result.append("|       EmptyChess          |\n")
+        result.append("|___________________________|\n")
+        result.append(self.scuare.view)
 
         return result
 
@@ -253,14 +255,17 @@ class PieceChess(EntityChess):
         self.admin_obj = AdminObjetives()
 
 
-    def __str__(self) -> str:
-        result: str = "\n"
+    @property
+    def view(self) -> Text:
+        result: Text = Text("\n")
 
-        result += "____________________________\n"
-        result += f"|{colored(f"{self.__class__.__name__}({self.char} )".center(27), self.console_color)}|\n"
-        result += f"|{f"  Clase: {self.clase}".ljust(27)}|\n"
-        result += f"|{f"  In Hacke: {self.in_hacke}".ljust(27)}|\n"
-        result += f"|{f"  In still: {self.in_still}".ljust(27)}|\n"
+        result.append("____________________________\n")
+        result.append("|")
+        result.append(f"{self.__class__.__name__}({self.char} )".center(27), f"bold {self.console_color}")
+        result.append("|\n")
+        result.append(f"|{f"  Clase: {self.clase}".ljust(27)}|\n")
+        result.append(f"|{f"  In Hacke: {self.in_hacke}".ljust(27)}|\n")
+        result.append(f"|{f"  In still: {self.in_still}".ljust(27)}|\n")
 
         if self.in_still:
             allowed_mov_str: str = ""
@@ -268,36 +273,36 @@ class PieceChess(EntityChess):
             for mov in self.allowed_movs:
                 allowed_mov_str += f"{str(mov.value)}, "
 
-            result += f"|{f"  Allowed movs: [{allowed_mov_str}]".ljust(27)}|\n"
+            result.append(f"|{f"  Allowed movs: [{allowed_mov_str}]".ljust(27)}|\n")
 
-        result += "|                           |\n" 
+        result.append("|                           |\n")
 
         tablero_str: list[list[str]] = [["Ｘ " for _ in range(8)] for _ in range(8)] 
 
         y, x = self.coord
-        tablero_str[y][x] = colored(f"{self.char}  ", self.console_color)
+        tablero_str[y][x] = Text(f"{self.char}  ", f"bold {self.console_color}")
 
         for coord, tipo in self.get_coords_objetive():
             color: Color 
 
             if tipo == OBJ_EMPTY: color = "green"
             elif tipo == OBJ_ENEMY: color = "red"
-            elif tipo == OBJ_INVALID: color = "blue"
+            elif tipo == OBJ_INVALID: color = self.console_color
 
             y, x = coord
-            tablero_str[y][x] = colored("Ｘ ", color)
+            tablero_str[y][x] = Text("Ｘ ", f"bold {color}")
 
         for column in tablero_str:
-            result += "|  "
+            result.append("|  ")
 
             for data in column: 
-                result += data
+                result.append(data)
                 
-            result += " |\n"
+            result.append(" |\n")
 
-        result += "|                           |\n" 
-        result += "|___________________________|\n"
-        result += f"{self.scuare}"
+        result.append("|                           |\n" )
+        result.append("|___________________________|\n")
+        result.append(self.scuare.view)
     
         return result
     

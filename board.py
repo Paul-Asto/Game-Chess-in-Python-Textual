@@ -1,5 +1,5 @@
 from constant import CHESS_BOARD_SIZE_X, CHESS_BOARD_SIZE_Y, ARMY_WHITE
-from termcolor import colored
+from rich.text import Text
 
 from coord import Coord
 from scuare import Scuare
@@ -114,33 +114,33 @@ class Board:
 
         return result[: -1]
 
-
-    def __str__(self) -> str:
+    @property
+    def view(self) -> Text:
         index: int = 8
-        result: str = "\n"
-        result += "____________________________\n"
-        result += f"|          Board            |\n"
-        result += "|___________________________|\n\n"
-        result += "   A  B  C  D  E  F  G  H  \n\n"
+        result: Text = Text("\n")
+        result.append("____________________________\n")
+        result.append("|          Board            |\n")
+        result.append("|___________________________|\n\n")
+        result.append("   A  B  C  D  E  F  G  H  \n\n")
 
         for column in self.content:
-            result += f"{index}  "
+            result.append(f"{index}  ")
 
             for scuare in column:
                 ficha = scuare.ficha
                 
                 if isinstance(ficha, EmptyChess):
-                    result += "Ｘ "
+                    result.append("Ｘ ")
                     continue
                     
                 if isinstance(ficha, PieceChess):
-                    result += f"{colored(ficha.char, ficha.console_color)}  "
+                    result.append(f"{ficha.char}  ", style=f"bold {ficha.console_color}")
                     continue
 
-            result += f" {index}\n" 
+            result.append(f" {index}\n")
             index -= 1 
 
-        result += "\n   A  B  C  D  E  F  G  H  \n"
+        result.append("\n   A  B  C  D  E  F  G  H  \n")
 
         return result
 
