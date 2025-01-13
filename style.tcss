@@ -1,11 +1,28 @@
-
-Vertical{
-    align: center middle;
-    width: 100%;  
-}
 Horizontal{
     align: center middle;
+    content-align: center middle;
+}
+
+
+Vertical.principal{
+    align: center middle;
+    width: 56%;  
+}
+Horizontal.principal{
+    align: center middle;
     height: 26;
+}
+
+.info{
+    height: 100%;
+    width: 45;
+}
+
+.content_data{
+    padding-left: 5;
+    padding-right: 5;
+    height: 50;
+    width: 45;
 }
 
 .content{
@@ -59,6 +76,7 @@ Horizontal{
     margin-right: 5;
     layout: grid;
     grid-size: 2 8;
+    background: orange;
 }
 
 GroupBlocks{
@@ -90,7 +108,9 @@ Block Static{
     background: black;
 }
 
-
+.moved{
+    background: yellow;
+}
 
 .enemy{
     background: red;
@@ -108,6 +128,8 @@ Block Static{
     border: solid;
 }
 */
+
+
 
 .armyBlack{
     color: red;

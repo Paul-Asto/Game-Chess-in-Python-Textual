@@ -114,8 +114,7 @@ class ChessGame:
         
         self.update_turno()
 
-        app.turno.update(self.notation_forsyth_edwards)
-        #app.update_view_turno(self.turn)
+        app.update_view_turno(self.turn)
 
         self.number_off_movs += 1
 
@@ -132,13 +131,16 @@ class ChessGame:
         self.selected_piece = value
 
 
-    def accion_game(self, group_blocks: "GroupBlocks") -> None:
+    async def accion_game(self, group_blocks: "GroupBlocks") -> None:
+        coord_end: Coord = self.selected_piece.coord
+
         if isinstance(self.previous_piece, EmptyChess):
             if not isinstance(self.selected_piece, PieceChess):
                 return
 
             # Si es el turno de la ficha seleccionada, entonces renderiza los objetivos
             if self.is_equals_turno(self.selected_piece.clase):
+                group_blocks.add_ultimate_coord_selected(coord_end)
                 group_blocks.addRegisterBlock(self.selected_piece.get_coords_objetive())
                 return 
 
@@ -149,8 +151,12 @@ class ChessGame:
             if self.previous_piece.is_equals_class(self.selected_piece.clase):
                 # Si la ficha previa es diferente de la ficha seleccionada, entonces renderiza
                 if self.previous_piece != self.selected_piece:
+                    group_blocks.deleted_ultimate_ultimate_coord_selected()
+                    group_blocks.add_ultimate_coord_selected(coord_end)
                     group_blocks.addRegisterBlock(self.selected_piece.get_coords_objetive())
                     return
+                
+                group_blocks.deleted_ultimate_ultimate_coord_selected()
             
             # En caso de que la ficha previa sea de diferente clase que la ficha seleccionada,
             # se sabe que la ficha seleccionada puede ser un empty o una ficha enemiga,
@@ -159,14 +165,18 @@ class ChessGame:
                 movement_performed, is_objetive_enemy = self.previous_piece.make_mov(self.selected_piece, self.board)
 
                 if movement_performed:
+                    group_blocks.deleted_parcial_ultimate_coord_selected()
+                    group_blocks.add_ultimate_coord_selected(coord_end)
                     group_blocks.update_view_block_off_coord(self.previous_piece.coord, self.selected_piece.coord)
                     app: "ChessApp" = group_blocks.app
 
                     if is_objetive_enemy:
                         app.save_view_kill(self.selected_piece)
                     
-                    self.iteration(app)  
-
+                    self.iteration(app) 
+                
+                else:
+                    group_blocks.deleted_ultimate_ultimate_coord_selected()
 
         # Se setea la ficha seleccionada para que en una futura accion la previous_ficha siempre sea empty
         self.set_selected_ficha(EmptyChess())

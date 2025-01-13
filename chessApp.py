@@ -1,7 +1,7 @@
 from textual.app import App, on
 from textual.widget import Widget
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Static, Button
+from textual.widgets import Static, Button, RichLog
 
 from constant import \
     BLOCK_BLACK,\
@@ -11,10 +11,12 @@ from constant import \
     ARMY_BLACK,\
     ARMY_WHITE
 
+import asyncio
+from time import sleep
 from coord import Coord
 from chessGame import chess_game
-
-from piece.piece import PieceChess
+from functions_stockfish import get_mov_uci_chess_bot, coords_chess_to_format_uci
+from piece.piece import PieceChess, EntityChess
 
 
 
@@ -42,7 +44,8 @@ generator_coord_widget = secuence_coord_widget()
 class Block(Widget):
     def __init__(self, classes: str , coord: Coord) -> None:
         super().__init__(classes=classes)
-    
+
+        self.list_class: list[str] = []
         self.coord: Coord = coord
         self.ficha: PieceChess = chess_game.get_ficha(self.coord)
         
@@ -59,19 +62,41 @@ class Block(Widget):
     # Event Click
     def on_click(self) -> None:
         chess_game.set_selected_ficha(self.ficha)
+        self.app.update_view_piece()
 
 
 
 class GroupBlocks(Vertical):
     def __init__(self, children: list[Block]) -> None:
         super().__init__()
-    
+
+        self.coords_ultimate_select: list[Coord] = []
         self.dict_blocks: dict[Coord, Block] = {}
 
         for block in children:
             self.dict_blocks[block.coord] = block
             self._add_child(block)
 
+    # funcions coords ultimate selected
+
+    def add_ultimate_coord_selected(self, *coords: Coord) -> None:
+        for coord in coords:
+            self.addRegisterBlock([(coord, "moved")])
+
+            self.coords_ultimate_select.append(coord)
+
+    def deleted_parcial_ultimate_coord_selected(self) -> None:
+        if len(self.coords_ultimate_select) > 2:
+            coord_1 = self.coords_ultimate_select.pop(0)
+            coord_2 = self.coords_ultimate_select.pop(0)
+
+            self.clearRegisterBlock([(coord_1, "moved")])
+            self.clearRegisterBlock([(coord_2, "moved")])
+    
+    def deleted_ultimate_ultimate_coord_selected(self) -> None:
+        coord = self.coords_ultimate_select.pop()
+        self.clearRegisterBlock([(coord, "moved")])
+    
 
     # Funcions UpdateViewBlock
     def update_view_block_off_coord(self, *list_coord: Coord) -> None:
@@ -84,17 +109,40 @@ class GroupBlocks(Vertical):
 
     
     # Funcions RegisterBlock
-    def addRegisterBlock(self, list_data: list[tuple, str]) -> None:
+    def addRegisterBlock(self, list_data: list[tuple[Coord, str]]) -> None:
         for coord, key in list_data:
             self.dict_blocks[coord].add_class(key) 
 
-    def clearRegisterBlock(self, list_data: list[tuple, str]) -> None:
+    def clearRegisterBlock(self, list_data: list[tuple[Coord, str]]) -> None:
         for coord, key in list_data:
             self.dict_blocks[coord].remove_class(key) 
 
 
-    def on_click(self) -> None:
-        chess_game.accion_game(self)
+    async def on_click(self) -> None:
+        await chess_game.accion_game(self)
+
+        if chess_game.turn != ARMY_BLACK:  
+            return 
+
+        self.app.update_view_board()
+        await asyncio.sleep(0.3)
+        
+        mov_uci = get_mov_uci_chess_bot(chess_game.notation_forsyth_edwards)
+        coord_initial, coord_final = coords_chess_to_format_uci(mov_uci)
+
+        self.dict_blocks[coord_initial].on_click()
+        await chess_game.accion_game(self)
+
+        await asyncio.sleep(0.6)
+
+        self.dict_blocks[coord_final].on_click()
+        await chess_game.accion_game(self)
+
+        self.app.update_view_board()
+
+        await asyncio.sleep(0.3)
+
+            
 
 
 
@@ -102,36 +150,45 @@ class ChessApp(App):
     CSS_PATH = "style.tcss"
 
     def compose(self):
-        with Vertical():
-            with Widget(classes= "content"):
-                yield Static("AJEDREZ vs IA")
+        with Horizontal():
+            with Widget(classes= "info"):
+                self.info_piece = RichLog(classes= "content_data")
+                yield self.info_piece
 
-            with Widget(classes= "content"):
-                self.turno = Static("Turno de los azules", classes= "turno-azul")
-                yield self.turno
+            with Vertical(classes= "principal"):
+                with Widget(classes= "content"):
+                    yield Static("AJEDREZ vs IA")
 
-            with Horizontal():
-                self.killFichasAzules = Widget(classes= "fichas azules")
-                yield self.killFichasAzules
+                with Widget(classes= "content"):
+                    self.turno = Static("Turno de los azules", classes= "turno-azul")
+                    yield self.turno
 
-                self.tablero = GroupBlocks(
-                    children = [
-                        Block(
-                            classes = next(generator_class_widget),
-                            coord = next(generator_coord_widget),
-                        ) for _ in range(CHESS_BOARD_SIZE_Y * CHESS_BOARD_SIZE_X)]
-                )
+                with Horizontal(classes= "principal"):
+                    self.killFichasAzules = Widget(classes= "fichas azules")
+                    yield self.killFichasAzules
 
-                yield self.tablero
+                    self.tablero = GroupBlocks(
+                        children = [
+                            Block(
+                                classes = next(generator_class_widget),
+                                coord = next(generator_coord_widget),
+                            ) for _ in range(CHESS_BOARD_SIZE_Y * CHESS_BOARD_SIZE_X)]
+                    )
 
-                self.killFichasRojas = Widget(classes= "fichas rojas")
-                yield self.killFichasRojas
+                    yield self.tablero
 
-            with Widget(classes= "content"):
-                yield Button("REINICIAR", id= "btn-reiniciar")
+                    self.killFichasRojas = Widget(classes= "fichas rojas")
+                    yield self.killFichasRojas
 
-            with Widget(classes= "content"):
-                yield Button("SALIR", id= "btn-salir")
+                with Widget(classes= "content"):
+                    yield Button("REINICIAR", id= "btn-reiniciar")
+
+                with Widget(classes= "content"):
+                    yield Button("SALIR", id= "btn-salir")
+            
+            with Widget(classes= "info"):
+                self.info_board = Static(str(chess_game.board), classes= "content_data")
+                yield self.info_board
 
 
     @on(Button.Pressed, "#btn-reiniciar")
@@ -178,3 +235,10 @@ class ChessApp(App):
     def clear_view_kill(self):
         self.killFichasAzules.remove_children(Static)
         self.killFichasRojas.remove_children(Static)
+
+    def update_view_board(self):
+        self.info_board.update(str(chess_game.board))
+
+    def update_view_piece(self):
+        self.info_piece.clear()
+        self.info_piece.write(str(chess_game.selected_piece))
