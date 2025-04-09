@@ -1,12 +1,8 @@
-from board import Board
-from piece.torre import Torre
-from piece.alfil import Alfil
-from piece.caballo import Caballo
-from piece.reina import Reina
-from piece.rey import Rey
-from piece.peon import Peon
+from src.core.board import Board
+from src.core.pieces import Torre, Peon
 
-from coord import Coord
+
+from src.coordinate import Coord
 
 from rich.console import Console
 from rich.text import Text
