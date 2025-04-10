@@ -3,10 +3,13 @@ from typing import TYPE_CHECKING
 from src.coordinate import Coord
 from src.core.piece import PieceChess, EntityChess, EmptyChess
 
+
 if TYPE_CHECKING:
-    from src.ui.chessApp import ChessApp, GroupBlocks
+    from src.ui.chessAppGui import ChessAppGui, GroupBlocks
     from src.core.army import Army
     from src.core.board import Board
+    from src.core.square import Square
+    from src.core.types import Generic_Square
     
 
 
@@ -14,8 +17,8 @@ class ChessGame:
     number_off_middle_movs: int = 0
     number_off_movs: int = 1
 
-    def __init__(self, army_white: "Army", army_black: "Army", board: "Board") -> None:
-        self.board: "Board" = board
+    def __init__(self, army_white: "Army", army_black: "Army", board: "Board[Generic_Square]") -> None:
+        self.board: "Board[Generic_Square]" = board
 
         self.army_white: "Army" = army_white
         self.army_black: "Army" = army_black
@@ -24,8 +27,6 @@ class ChessGame:
 
         self.previous_piece: EntityChess = EmptyChess()
         self.selected_piece: EntityChess = EmptyChess()
-
-        self.init()
 
     
     @property
@@ -82,6 +83,10 @@ class ChessGame:
     # tablero Funcions
     def get_ficha(self, coord: Coord) -> EntityChess | None:
         return self.board.get_ficha(coord)
+    
+
+    def get_square(self, coord: Coord) -> "Square":
+        return self.board.get_scuare(coord)
 
 
     def get_enemy_army_for_class(self, id: str) -> "Army":
@@ -92,12 +97,11 @@ class ChessGame:
             return self.army_white
 
 
-    def iteration(self, app: "ChessApp")-> None:
+    def iteration(self, app: "ChessAppGui")-> None:
         army_next: "Army" = self.get_enemy_army_for_class(self.previous_piece.clase)
 
         army_next.update_influence_rey(self.board)
-        army_next.delete_peon_passant(self.board, app)
-        app.tablero.update_view_blocks()
+        army_next.delete_peon_passant(self.board)
         
         self.update_turno()
 
@@ -154,8 +158,7 @@ class ChessGame:
                 if movement_performed:
                     group_blocks.deleted_parcial_ultimate_coord_selected()
                     group_blocks.add_ultimate_coord_selected(coord_end)
-                    group_blocks.update_view_block_off_coord(self.previous_piece.coord, self.selected_piece.coord)
-                    app: "ChessApp" = group_blocks.app
+                    app: "ChessAppGui" = group_blocks.app
 
                     if is_objetive_enemy:
                         app.save_view_kill(self.selected_piece)

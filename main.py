@@ -1,8 +1,9 @@
-from src.ui.chessApp import ChessApp
+from src.ui.chessAppGui import ChessAppGui
 from src.chessGame import ChessGame
 from src.core.army import Army
 from src.core.board import Board
 from src.coordinate import Coord
+from src.ui.react_component import ReactScuare
 
 from src.core.pieces import (
     Rey,
@@ -81,9 +82,10 @@ army_black.pieces = {
         }
 
 
-board: Board = Board(
+board: Board[ReactScuare] = Board[ReactScuare](
     size_y= CHESS_BOARD_SIZE_Y,
     size_x= CHESS_BOARD_SIZE_X,
+    type_square= ReactScuare,
 )
 
 game: ChessGame = ChessGame(
@@ -92,7 +94,7 @@ game: ChessGame = ChessGame(
     board= board,
 )
 
-app = ChessApp(
+app = ChessAppGui(
     chess_game= game
 )
 

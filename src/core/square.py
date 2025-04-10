@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 
-class Scuare:
+class Square:
     '''
     Class Scuare:  \n
     
@@ -51,14 +51,13 @@ class Scuare:
     - movs_on_prowl (dict["MovPiece", None])        lista de movimientos de fichas que tienen como objetivo este Scuare  \n
     '''
 
-    coord: Coord
-    __ficha: EntityChess
-    __movs_on_prowl: dict["MovPiece", None]
+    sealed_ficha: EntityChess
 
     def __init__(self, coord: Coord, ficha: EntityChess) -> None      :
-        self.coord = coord
+        self.coord: Coord = coord
         self.ficha = ficha
-        self.__movs_on_prowl = {}
+
+        self.__movs_on_prowl: dict["MovPiece", None] = {}
 
 
     @property
@@ -125,12 +124,12 @@ class Scuare:
     # propiedad Ficha
     @property
     def ficha(self) -> EntityChess: 
-        return self.__ficha
+        return self.sealed_ficha
     
     @ficha.setter
     def ficha(self, value: EntityChess) -> None: 
-        self.__ficha = value
-        self.__ficha.scuare = self
+        self.sealed_ficha = value
+        self.sealed_ficha.scuare = self
 
 
     # Propiedad movs_prowl

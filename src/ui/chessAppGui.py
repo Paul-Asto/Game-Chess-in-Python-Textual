@@ -1,8 +1,7 @@
 from textual.app import App, on
-from textual.events import Click
 from textual.widget import Widget
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Static, Button, RichLog
+from textual.widgets import Static, Button
 
 from src.chess_constant import \
     BLOCK_BLACK,\
@@ -12,12 +11,19 @@ from src.chess_constant import \
     ID_ARMY_BLACK,\
     ID_ARMY_WHITE
 
+from src.observer_interface import Observer
 import asyncio
-from time import sleep
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from src.core.types import Generic_Square
+    from src.chessGame import ChessGame
+    from src.core.piece import PieceChess
+
+
 from src.coordinate import Coord
-from src.chessGame import ChessGame
 from src.utilities_stockfish import get_mov_uci_chess_bot, coords_chess_to_format_uci
-from src.core.piece import PieceChess, EntityChess
+
 
 
 
@@ -42,53 +48,49 @@ generator_coord_widget = secuence_coord_widget()
 
 
 
-class Block(Widget):
-    app: "ChessApp"
+class Block(Widget, Observer["Generic_Square"]):
+    app: "ChessAppGui"
 
-    def __init__(self, classes: str , coord: Coord) -> None:
+    def __init__(self, classes: str) -> None:
         super().__init__(classes=classes)
-
-        self.list_class: list[str] = []
-        self.coord: Coord = coord
-        self.ficha: PieceChess = self.app.chess_game.get_ficha(self.coord)
         
-        self.view: Static = Static(self.ficha.char, classes = self.ficha.clase)   
+        self.view: Static = Static()   
         self._add_child(self.view) 
-    
-    # Funcion Update View
-    def update_ficha(self) -> None:
-        self.ficha = self.app.chess_game.get_ficha(self.coord)
-
-        self.view.set_classes(self.ficha.clase)
-        self.view.update(self.ficha.char)
 
     # Event Click
     def on_click(self) -> None:
-        self.app.chess_game.set_selected_ficha(self.ficha)
+        self.app.chess_game.set_selected_ficha(self.observed.ficha)
         self.app.update_view_piece()
+
+    # oberver update
+    def react_changes(self):
+        ficha: "PieceChess" = self.observed.ficha
+        
+        self.view.set_classes(ficha.clase)
+        self.view.update(ficha.char)
 
 
 
 class GroupBlocks(Vertical):
-    app: "ChessApp"
+    app: "ChessAppGui"
 
-    def __init__(self, children: list[Block]) -> None:
+    def __init__(self, children: list[tuple[Coord, Block]]) -> None:
         super().__init__()
 
         self.coords_ultimate_select: list[Coord] = []
         self.dict_blocks: dict[Coord, Block] = {}
 
-        for block in children:
-            self.dict_blocks[block.coord] = block
+        for coord, block in children:
+            self.dict_blocks[coord] = block
             self._add_child(block)
 
     # funcions coords ultimate selected
-
     def add_ultimate_coord_selected(self, *coords: Coord) -> None:
         for coord in coords:
             self.addRegisterBlock([(coord, "moved")])
 
             self.coords_ultimate_select.append(coord)
+
 
     def deleted_parcial_ultimate_coord_selected(self) -> None:
         if len(self.coords_ultimate_select) > 2:
@@ -98,25 +100,17 @@ class GroupBlocks(Vertical):
             self.clearRegisterBlock([(coord_1, "moved")])
             self.clearRegisterBlock([(coord_2, "moved")])
     
+
     def deleted_ultimate_ultimate_coord_selected(self) -> None:
         coord = self.coords_ultimate_select.pop()
         self.clearRegisterBlock([(coord, "moved")])
-    
-
-    # Funcions UpdateViewBlock
-    def update_view_block_off_coord(self, *list_coord: Coord) -> None:
-        for coord in list_coord:
-            self.dict_blocks[coord].update_ficha()
-
-    def update_view_blocks(self) -> None:
-        for block in self.dict_blocks.values():
-            block.update_ficha()
 
     
     # Funcions RegisterBlock
     def addRegisterBlock(self, list_data: list[tuple[Coord, str]]) -> None:
         for coord, key in list_data:
             self.dict_blocks[coord].add_class(key) 
+
 
     def clearRegisterBlock(self, list_data: list[tuple[Coord, str]]) -> None:
         for coord, key in list_data:
@@ -149,13 +143,13 @@ class GroupBlocks(Vertical):
 
 
 
-class ChessApp(App):
+class ChessAppGui(App):
     CSS_PATH = "style.tcss"
 
-    def __init__(self, chess_game: ChessGame):
+    def __init__(self, chess_game: "ChessGame"):
         super().__init__()
 
-        self.chess_game: ChessGame = chess_game
+        self.chess_game: "ChessGame" = chess_game
 
     def compose(self):
         with Horizontal():
@@ -177,10 +171,9 @@ class ChessApp(App):
 
                     self.tablero = GroupBlocks(
                         children = [
-                            Block(
-                                classes = next(generator_class_widget),
-                                coord = next(generator_coord_widget),
-                            ) for _ in range(CHESS_BOARD_SIZE_Y * CHESS_BOARD_SIZE_X)]
+                            (next(generator_coord_widget), Block(classes = next(generator_class_widget)))
+                            for _ in range(CHESS_BOARD_SIZE_Y * CHESS_BOARD_SIZE_X)
+                        ]
                     )
 
                     yield self.tablero
@@ -199,6 +192,15 @@ class ChessApp(App):
                 yield self.info_board
 
 
+    def on_mount(self):
+        # Conectar los observers con los observeds
+        for coord, block in self.tablero.dict_blocks.items():
+            block.observed = self.chess_game.get_square(coord)
+
+        self.chess_game.init()
+
+        
+
     @on(Button.Pressed, "#btn-reiniciar")
     def restart_app(self):
         if isinstance(self.chess_game.selected_piece, PieceChess):
@@ -206,7 +208,6 @@ class ChessApp(App):
 
         self.chess_game.restart_game()
 
-        self.tablero.update_view_blocks()
         self.update_view_turno(self.chess_game.turn)
         self.clear_view_kill()
 

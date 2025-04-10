@@ -1,5 +1,7 @@
 from enum import Enum
 
+
+
 class EOrientationArmy(Enum):
     DOWN = 1
     UP = -1

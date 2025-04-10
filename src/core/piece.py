@@ -8,7 +8,7 @@ from src.coordinate import Coord
 
 if TYPE_CHECKING:
     from src.core.army import Army
-    from src.core.scuare import Scuare
+    from src.core.square import Square
     from src.core.board import Board
 
 
@@ -114,7 +114,7 @@ class EntityChess:
 
     str_fen: str = "-"
     __char: str = ""
-    __scuare: "Scuare" = None
+    __scuare: "Square" = None
     __army: "Army"
     __clase_alter: str = ""
 
@@ -183,14 +183,14 @@ class EntityChess:
 
     # Propiedad Scuare
     @property
-    def scuare(self) -> "Scuare": 
+    def scuare(self) -> "Square": 
         if self.__scuare == None:
             raise Exception("La ficha no se encuentra en ningun scuare")
         
         return self.__scuare
 
     @scuare.setter
-    def scuare(self, scuare: "Scuare") -> None:
+    def scuare(self, scuare: "Square") -> None:
         self.__scuare = scuare
 
 

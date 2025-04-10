@@ -11,7 +11,7 @@ from src.core.piece import PieceChess
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from src.ui.chessApp import ChessApp
+    from src.ui.chessAppGui import ChessAppGui
     from src.core.pieces import Peon
     from src.core.board import Board
     from src.core.piece import ColorPiece
@@ -70,7 +70,7 @@ class Army:
         self.peon_passant = peon
 
     
-    def delete_peon_passant(self, tablero: "Board", app: "ChessApp") -> None:
+    def delete_peon_passant(self, tablero: "Board") -> None:
         if self.peon_passant == None:
             return
         
@@ -78,7 +78,6 @@ class Army:
         self.peon_passant.update_presence(tablero)
         self.peon_passant = None
 
-        app.tablero.update_view_blocks()
 
 
     def init_influence(self, board: "Board") -> None: 

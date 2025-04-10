@@ -1,13 +1,15 @@
 from src.chess_constant import ID_ARMY_WHITE
 from rich.text import Text
+from typing import Generic
 
+from src.core.types import Generic_Square
 from src.coordinate import Coord
-from src.core.scuare import Scuare
+
 from src.core.piece import EmptyChess, EntityChess, PieceChess
 
 
 
-class Board:
+class Board(Generic[Generic_Square]):
 
     '''
 
@@ -57,13 +59,14 @@ class Board:
     - content (tuple[tuple[Scuare]] ):    Contenido de la matriz de "Scuare" \n
     '''
 
-    content: tuple[tuple[Scuare]] 
+    content: tuple[tuple[Generic_Square]] 
 
-    def __init__(self, size_y: int, size_x: int) -> None:
+    def __init__(self, size_y: int, size_x: int, type_square: type[Generic_Square]) -> None:
         '''
         Al inicializar se llama a la funcion "refresh_content" para guardar en el atributo content
         la matriz de "Scuare"
         '''
+        self.type_square: type[Generic_Square] = type_square
 
         self.size_y: int = size_y
         self.size_x: int = size_x
@@ -80,7 +83,7 @@ class Board:
 
         self.content = tuple([
                 tuple([
-                    Scuare(Coord(y, x), EmptyChess()) 
+                    self.type_square(Coord(y, x), EmptyChess()) 
                     for x in range(self.size_x)
                 ])
                 for y in range(self.size_y)
@@ -170,7 +173,7 @@ class Board:
         return self.get_scuare(coord).ficha if self.is_valid_coord(coord) else None
     
 
-    def get_scuare(self, coord: Coord) -> Scuare | None:
+    def get_scuare(self, coord: Coord) -> Generic_Square | None:
         '''
         Retorna el "Scuare" en la posicion de la coordenada pasada como parametro,
         primero verifica si es una coordenada valida usando la funcion "is_valid_coord".
@@ -208,8 +211,8 @@ class Board:
         ficha_start.clear_influence(self)
         ficha_final.clear_influence(self)
 
-        scuare_init: Scuare = ficha_start.scuare
-        scuare_final: Scuare = ficha_final.scuare
+        scuare_init: Generic_Square = ficha_start.scuare
+        scuare_final: Generic_Square = ficha_final.scuare
 
         scuare_init.ficha = ficha_final
         scuare_final.ficha = ficha_start
@@ -219,3 +222,6 @@ class Board:
 
         scuare_init.ficha.update_influence(self)
         scuare_final.ficha.update_influence(self)
+
+
+
