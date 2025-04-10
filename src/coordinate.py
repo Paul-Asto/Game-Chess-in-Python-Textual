@@ -1,4 +1,4 @@
-class AbstractCoord:
+class CardinalPair:
     def __init__(self, y: int, x: int) -> None:
         self.y = y
         self.x = x
@@ -11,8 +11,8 @@ class AbstractCoord:
     def __hash__(self):
         return hash(self.value)
     
-    def __eq__(self, other: "AbstractCoord") -> bool:
-        if  issubclass(type(other), AbstractCoord):
+    def __eq__(self, other: "CardinalPair") -> bool:
+        if  issubclass(type(other), CardinalPair):
             return self.value == other.value
         
         else: return False
@@ -22,18 +22,18 @@ class AbstractCoord:
 
 
 
-class Coord(AbstractCoord):
+class Coord(CardinalPair):
     def __init__(self, y: int, x: int) -> None:
         super().__init__(y, x)
 
     def __sub__(self, other):
-        if not issubclass(type(other), AbstractCoord):
+        if not issubclass(type(other), CardinalPair):
             return NotImplemented
         
         return Coord(self.y - other.y, self.x - other.x)
     
     def __add__(self, other: "Coord"):
-        if not issubclass(type(other), AbstractCoord):
+        if not issubclass(type(other), CardinalPair):
             return NotImplemented
         
         return Coord(self.y + other.y, self.x + other.x)

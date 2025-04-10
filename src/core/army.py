@@ -1,15 +1,9 @@
 from copy import deepcopy
 from src.coordinate import Coord
 
-from src.chess_constant import ARMY_BLACK, ARMY_WHITE
-
 from src.core.pieces import (
     Rey,
-    Torre,
-    Alfil,
     Peon,
-    Reina,
-    Caballo,
     )
 
 from src.core.piece import PieceChess
@@ -20,44 +14,45 @@ if TYPE_CHECKING:
     from src.ui.chessApp import ChessApp
     from src.core.pieces import Peon
     from src.core.board import Board
-    from src.core.piece import Color
+    from src.core.piece import ColorPiece
+    from src.chess_constant import EOrientationArmy
 
 
 
 class Army:
-    console_color: "Color" = "white"
-
     in_hacke: bool = False
     in_hacke_mate: bool = False
 
     active_enrroque_corto: bool = True
     active_enrroque_largo: bool = True
 
-    orientacion: int = 1
-    clase: str
-
-    coords_priority: list[tuple[Coord, str]] 
-    pieces_defending: list[PieceChess] 
-
-    rey: Rey 
-    __fichas: dict[Coord, PieceChess]
-    __copy_fichas: dict[Coord, PieceChess] 
-
+    rey: Rey = None
     peon_passant: "Peon" = None
 
-    def __init__(self):
-        self.coords_priority = []
-        self.pieces_defending = []
+    __fichas: dict[Coord, PieceChess] = None
+    __copy_fichas: dict[Coord, PieceChess]  = None
+
+
+    def __init__(self, orientation: "EOrientationArmy", console_color: "ColorPiece", id_army: str = None):
+
+        # Condicion de generacion de id
+        self.id: str = id_army if id_army != None else f"id: {id(self)}"
+
+        self.orientacion: "EOrientationArmy" = orientation
+        self.console_color: "ColorPiece" = console_color
+
+        self.coords_priority: list[tuple[Coord, str]]  = []
+        self.pieces_defending: list[PieceChess]  = []
         self.__copy_fichas = {}
         
 
     # propiedad fichas
     @property
-    def fichas(self) -> list[tuple[Coord, PieceChess]]:
+    def pieces(self) -> list[tuple[Coord, PieceChess]]:
         return list(self.__copy_fichas.items())
     
-    @fichas.setter
-    def fichas(self, value: dict[Coord, PieceChess]) -> None:
+    @pieces.setter
+    def pieces(self, value: dict[Coord, PieceChess]) -> None:
         self.__fichas = value
 
         self.__copy_fichas = deepcopy(self.__fichas)
@@ -87,7 +82,7 @@ class Army:
 
 
     def init_influence(self, board: "Board") -> None: 
-        for _, ficha in self.fichas:
+        for _, ficha in self.pieces:
             ficha.spread_influence(board)
 
     
@@ -111,58 +106,9 @@ class Army:
                 
 
 
-class ArmyBlack(Army):    
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.clase = ARMY_BLACK
-        self.orientacion = 1 
-        self.console_color = "red"
+    def notation_FE_enrroque(self) -> str:
+        notation: str = \
+            f"{"k" if self.active_enrroque_corto else ""}" +\
+            f"{"q" if self.active_enrroque_largo else ""}"
         
-        self.fichas = {
-            Coord(1, 0): Peon(self.orientacion),
-            Coord(1, 1): Peon(self.orientacion),
-            Coord(1, 2): Peon(self.orientacion),
-            Coord(1, 3): Peon(self.orientacion),
-            Coord(1, 4): Peon(self.orientacion),
-            Coord(1, 5): Peon(self.orientacion),
-            Coord(1, 6): Peon(self.orientacion),
-            Coord(1, 7): Peon(self.orientacion),
-            Coord(0, 0): Torre(),
-            Coord(0, 1): Caballo(),
-            Coord(0, 2): Alfil(),
-            Coord(0, 3): Reina(),
-            Coord(0, 4): Rey(),
-            Coord(0, 5): Alfil(),
-            Coord(0, 6): Caballo(),
-            Coord(0, 7): Torre(),
-        }
-
-
-
-class ArmyWhite(Army):
-    def __init__(self) -> None:
-        super().__init__()
-
-        self.clase = ARMY_WHITE
-        self.orientacion = -1
-        self.console_color = "blue"
-
-        self.fichas = {
-            Coord(6, 0): Peon(self.orientacion),
-            Coord(6, 1): Peon(self.orientacion),
-            Coord(6, 2): Peon(self.orientacion),
-            Coord(6, 3): Peon(self.orientacion),
-            Coord(6, 4): Peon(self.orientacion),
-            Coord(6, 5): Peon(self.orientacion),
-            Coord(6, 6): Peon(self.orientacion),
-            Coord(6, 7): Peon(self.orientacion), 
-            Coord(7, 0): Torre(),
-            Coord(7, 1): Caballo(),
-            Coord(7, 2): Alfil(),
-            Coord(7, 3): Reina(),
-            Coord(7, 4): Rey(),
-            Coord(7, 5): Alfil(),
-            Coord(7, 6): Caballo(),
-            Coord(7, 7): Torre(),
-        }
+        return notation if notation != "" else "-"

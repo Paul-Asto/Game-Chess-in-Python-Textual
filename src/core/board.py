@@ -1,4 +1,4 @@
-from src.chess_constant import CHESS_BOARD_SIZE_X, CHESS_BOARD_SIZE_Y, ARMY_WHITE
+from src.chess_constant import ID_ARMY_WHITE
 from rich.text import Text
 
 from src.coordinate import Coord
@@ -57,17 +57,17 @@ class Board:
     - content (tuple[tuple[Scuare]] ):    Contenido de la matriz de "Scuare" \n
     '''
 
-    size_y: int = CHESS_BOARD_SIZE_Y
-    size_x: int = CHESS_BOARD_SIZE_X
-    
     content: tuple[tuple[Scuare]] 
 
-    def __init__(self) -> None:
+    def __init__(self, size_y: int, size_x: int) -> None:
         '''
         Al inicializar se llama a la funcion "refresh_content" para guardar en el atributo content
         la matriz de "Scuare"
         '''
-        
+
+        self.size_y: int = size_y
+        self.size_x: int = size_x
+
         self.refresh_content()
 
 
@@ -105,7 +105,7 @@ class Board:
                     result += str(n_emptys)
                     n_emptys = 0
                 
-                piece_fen = piece.str_fen.upper() if piece.clase == ARMY_WHITE else piece.str_fen
+                piece_fen = piece.str_fen.upper() if piece.clase == ID_ARMY_WHITE else piece.str_fen
                 result += piece_fen
             
             if n_emptys != 0:

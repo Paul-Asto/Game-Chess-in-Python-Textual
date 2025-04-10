@@ -201,7 +201,7 @@ class Rey(PieceChess):
         if self.in_hacke:
             coords_disp: list[tuple[Coord, str]] = []
 
-            for _, ficha in self.army.fichas:
+            for _, ficha in self.army.pieces:
                 coords_disp += ficha.get_coords_objetive()
             
             result: bool = True

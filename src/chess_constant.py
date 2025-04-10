@@ -1,11 +1,17 @@
+from enum import Enum
+
+class EOrientationArmy(Enum):
+    DOWN = 1
+    UP = -1
+
 
 
 BLOCK_WHITE = "blanco"
 BLOCK_BLACK = "negro"
 
-ARMY_WHITE = "armyWhite"
-ARMY_BLACK = "armyBlack"
-NONE_ARMY = "none"
+ID_ARMY_WHITE = "armyWhite"
+ID_ARMY_BLACK = "armyBlack"
+ID_NONE_ARMY = "none"
 
 OBJ_ENEMY = "enemy"
 OBJ_EMPTY = "empty"
@@ -14,6 +20,11 @@ OBJ_INVALID = "invalid"
 CHESS_BOARD_SIZE_X = 8
 CHESS_BOARD_SIZE_Y = 8
 
+COLOR_ARMY_WHITE = "blue"
+COLOR_ARMY_BLACK = "red"
+
+ORIENT_ARMY_WHITE = EOrientationArmy.UP
+ORIENT_ARMY_BLACK = EOrientationArmy.DOWN
 
 # Caracteres de Piezas
 CHAR_VIEW_REY = "♔"     # chr(9812)

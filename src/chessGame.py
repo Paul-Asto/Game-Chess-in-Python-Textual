@@ -1,16 +1,12 @@
 from typing import TYPE_CHECKING
-from src.constant import OBJ_EMPTY, OBJ_ENEMY, ARMY_BLACK, ARMY_WHITE
 
-from src.coord import Coord
+from src.coordinate import Coord
 from src.core.piece import PieceChess, EntityChess, EmptyChess
-from src.core.board import Board
-
-from src.core.army import Army, ArmyBlack, ArmyWhite
-from src.core.scuare import Scuare
-
 
 if TYPE_CHECKING:
     from src.ui.chessApp import ChessApp, GroupBlocks
+    from src.core.army import Army
+    from src.core.board import Board
     
 
 
@@ -18,13 +14,13 @@ class ChessGame:
     number_off_middle_movs: int = 0
     number_off_movs: int = 1
 
-    def __init__(self) -> None:
-        self.board: Board = Board()
+    def __init__(self, army_white: "Army", army_black: "Army", board: "Board") -> None:
+        self.board: "Board" = board
 
-        self.army_white: ArmyWhite = ArmyWhite()
-        self.army_black: ArmyBlack = ArmyBlack()
+        self.army_white: "Army" = army_white
+        self.army_black: "Army" = army_black
 
-        self.turn: str = self.army_white.clase
+        self.turn: str = self.army_white.id
 
         self.previous_piece: EntityChess = EmptyChess()
         self.selected_piece: EntityChess = EmptyChess()
@@ -34,35 +30,26 @@ class ChessGame:
     
     @property
     def notation_forsyth_edwards(self) -> str:
-        turn: str = "w" if self.turn == ARMY_WHITE else "b"
+        turn: str = "w" if self.turn == self.army_white.id else "b"
 
-        enrroque_w: str = \
-            f"{"K" if self.army_white.active_enrroque_corto else ""}" +\
-            f"{"Q" if self.army_white.active_enrroque_largo else ""}"
-        enrroque_w = enrroque_w if enrroque_w != "" else "-"
-
-        enrroque_b: str = \
-            f"{"k" if self.army_black.active_enrroque_corto else ""}" +\
-            f"{"q" if self.army_black.active_enrroque_largo else ""}"
-        enrroque_b = enrroque_b if enrroque_b != "" else "-"
+        enrroque_w: str = self.army_white.notation_FE_enrroque().upper()
+        enrroque_b: str = self.army_black.notation_FE_enrroque().lower()
 
         enrroque_fen: str = enrroque_w + enrroque_b
         enrroque_fen = enrroque_fen if enrroque_fen != "--" else "-"
 
         coord_mov_passant: str = "-"
 
-        result: str = \
+        return \
             f"{self.board.notation_forsyth_edwards} {turn} " +\
             f"{enrroque_fen} {coord_mov_passant} " +\
             f"{self.number_off_middle_movs} {self.number_off_movs}"
 
-        return result
-
 
     # Funcions Starts
     def init(self) -> None:
-        self.board.set_fichas(self.army_white.fichas)
-        self.board.set_fichas(self.army_black.fichas)
+        self.board.set_fichas(self.army_white.pieces)
+        self.board.set_fichas(self.army_black.pieces)
 
         self.army_white.init_influence(self.board)
         self.army_black.init_influence(self.board)
@@ -73,7 +60,7 @@ class ChessGame:
         self.army_black.restart()
 
         self.board.refresh_content()
-        self.turn = self.army_white.clase
+        self.turn = self.army_white.id
 
         self.set_selected_ficha(EmptyChess())
     
@@ -85,7 +72,7 @@ class ChessGame:
 
     # Turno Funcions
     def update_turno(self) -> None: 
-        self.turn = self.get_enemy_army_for_class(self.turn).clase
+        self.turn = self.get_enemy_army_for_class(self.turn).id
 
 
     def is_equals_turno(self, turno: str) -> str:
@@ -97,16 +84,16 @@ class ChessGame:
         return self.board.get_ficha(coord)
 
 
-    def get_enemy_army_for_class(self, clase: str) -> Army:
-        if clase == ARMY_WHITE:
+    def get_enemy_army_for_class(self, id: str) -> "Army":
+        if id == self.army_white.id:
             return self.army_black
         
-        elif clase == ARMY_BLACK:
+        elif id == self.army_black.id:
             return self.army_white
 
 
     def iteration(self, app: "ChessApp")-> None:
-        army_next: Army = self.get_enemy_army_for_class(self.previous_piece.clase)
+        army_next: "Army" = self.get_enemy_army_for_class(self.previous_piece.clase)
 
         army_next.update_influence_rey(self.board)
         army_next.delete_peon_passant(self.board, app)
@@ -180,7 +167,3 @@ class ChessGame:
 
         # Se setea la ficha seleccionada para que en una futura accion la previous_ficha siempre sea empty
         self.set_selected_ficha(EmptyChess())
-
-
-
-chess_game: ChessGame = ChessGame()

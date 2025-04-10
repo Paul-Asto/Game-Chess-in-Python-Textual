@@ -1,13 +1,14 @@
-from src.coordinate import CardinalPair, Coord
+from src.coordinate import CardinalPair
 from typing import TYPE_CHECKING
 from src.chess_constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID
 
 
 if TYPE_CHECKING:
-    from src.core.pieces import Peon, Rey
+    from peon import Peon
+    from rey import Rey 
     from src.core.board import Board
     from src.coordinate import Coord
-    from src.core.piece import PieceChess, EntityChess, EmptyChess
+    from piece.piece import PieceChess, EntityChess, EmptyChess
 
 
 
@@ -35,7 +36,7 @@ class MovPiece(CardinalPair):
         if ficha is None:
             return
         
-        from src.core.piece import PieceChess, EntityChess, EmptyChess
+        from piece.piece import PieceChess, EntityChess, EmptyChess
 
         if isinstance(ficha, PieceChess):
             self.handle_register_piece(ficha)
@@ -89,7 +90,7 @@ class MovPieceSpreadable(MovPiece):
             if ficha is None:
                 return
             
-            from src.core.piece import PieceChess, EntityChess, EmptyChess
+            from piece.piece import PieceChess, EntityChess, EmptyChess
 
             if isinstance(ficha, PieceChess):
                 self.handle_register_piece(ficha)
@@ -150,7 +151,7 @@ class MovPeonFrontal(MovPiecePeon):
         if ficha is None:
             return
         
-        from src.core.piece import PieceChess, EntityChess, EmptyChess
+        from piece.piece import PieceChess, EntityChess, EmptyChess
 
         if isinstance(ficha, PieceChess):
             self.handle_register_piece(ficha)
@@ -180,7 +181,7 @@ class MovPeonDoubleFrontal(MovPiecePeon):
         
         ficha: EntityChess = board.get_ficha(self.ficha.coord + self.ficha.frontal_mov)
 
-        from src.core.piece import PieceChess, EntityChess
+        from piece.piece import PieceChess, EntityChess
 
         if isinstance(ficha, PieceChess):
             return
@@ -214,7 +215,7 @@ class MovPeonPassant(MovPiecePeon):
         self.ficha.add_coord_objetive(self, ficha.coord, OBJ_INVALID)
         ficha.add_mov_prowl(self)
         
-        from src.core.pieces import Peon
+        from piece.peon import Peon
 
         if isinstance(ficha, Peon):
             if ficha.is_passant:
@@ -261,7 +262,7 @@ class MovPieceRey(MovPiece):
         if ficha is None:
             return
         
-        from src.core.piece import PieceChess, EntityChess, EmptyChess
+        from piece.piece import PieceChess, EntityChess, EmptyChess
 
         if isinstance(ficha, PieceChess):
             self.handle_register_piece(ficha)
@@ -345,7 +346,7 @@ class MovReyEnrroqueCorto(MovPiece):
         
         torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, 3)))
 
-        from src.core.pieces import Torre
+        from piece.torre import Torre
 
         if not isinstance(torre, Torre):
             self.ficha.army.active_enrroque_corto = False
@@ -354,7 +355,7 @@ class MovReyEnrroqueCorto(MovPiece):
         empty_1: EntityChess = board.get_ficha(self.ficha.coord.move((0, 1)))
         is_atacked, _ = empty_1.scuare.is_attacked(self.ficha.clase)
 
-        from src.core.piece import PieceChess
+        from piece.piece import PieceChess
 
         if isinstance(empty_1, PieceChess) or is_atacked:
             return
@@ -396,7 +397,7 @@ class MovReyEnrroqueLargo(MovPiece):
         
         torre: EntityChess = board.get_ficha(self.ficha.coord.move((0, -4)))
     
-        from src.core.pieces import Torre
+        from piece.torre import Torre
 
         if not isinstance(torre, Torre):
             self.ficha.army.active_enrroque_largo = False
@@ -405,7 +406,7 @@ class MovReyEnrroqueLargo(MovPiece):
         empty_1: EntityChess = board.get_ficha(self.ficha.coord.move((0, -1)))
         is_atacked, _ = empty_1.scuare.is_attacked(self.ficha.clase)
 
-        from src.core.piece import PieceChess
+        from piece.piece import PieceChess
 
         if isinstance(empty_1, PieceChess) or is_atacked:
             return

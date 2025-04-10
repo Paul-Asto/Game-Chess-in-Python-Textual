@@ -1,7 +1,7 @@
 from rich.text import Text
 from typing import Literal
 from typing import TYPE_CHECKING
-from src.chess_constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID, NONE_ARMY
+from src.chess_constant import OBJ_EMPTY, OBJ_ENEMY, OBJ_INVALID, ID_NONE_ARMY
 
 from src.core.mov_piece import MovPiece
 from src.coordinate import Coord
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 
 
-Color = Literal[
+ColorPiece = Literal[
     "black",
     "grey",
     "red",
@@ -109,7 +109,7 @@ class AdminObjetives:
 
 
 class EntityChess:
-    console_color: Color = "white"
+    console_color: ColorPiece = "white"
     view: Text
 
     str_fen: str = "-"
@@ -148,7 +148,7 @@ class EntityChess:
     @property
     def clase(self) -> str: 
         if self.__army != None:
-            return self.army.clase
+            return self.army.id
         
         if self.__clase_alter == "":
             raise Exception("La ficha no pertenece a ninguna clase")
@@ -224,7 +224,7 @@ class EmptyChess(EntityChess):
     def __init__(self, army: "Army" = None):
         super().__init__(army)
 
-        self.clase = NONE_ARMY
+        self.clase = ID_NONE_ARMY
         self.char = " "
 
     @property
@@ -283,7 +283,7 @@ class PieceChess(EntityChess):
         tablero_str[y][x] = Text(f"{self.char}  ", f"bold {self.console_color}")
 
         for coord, tipo in self.get_coords_objetive():
-            color: Color 
+            color: ColorPiece 
 
             if tipo == OBJ_EMPTY: color = "green"
             elif tipo == OBJ_ENEMY: color = "red"
