@@ -1,6 +1,5 @@
 
 import subprocess
-from src.coordinate import Coord
 
 RUTA_STOCKFISH = "stockfish/stockfish-windows-x86-64.exe"
 
@@ -42,44 +41,10 @@ def get_mov_uci_chess_bot(fen: str) -> str:
     return bestmove_uci
 
 
-index_chess_x: dict[str, int] = { 
-    "a": 0,
-    "b": 1,
-    "c": 2, 
-    "d": 3, 
-    "e": 4, 
-    "f": 5, 
-    "g": 6, 
-    "h": 7, 
-}
-
-index_chess_y: dict[str, str] = {
-    "8": 0,
-    "7": 1,
-    "6": 2,
-    "5": 3,
-    "4": 4,
-    "3": 5,
-    "2": 6,
-    "1": 7,
-}
-
-
-def coords_chess_to_format_uci(uci: str) -> tuple[Coord, Coord]:
-    xa, ya, xb, yb = uci
-
-    coord_initial = Coord(index_chess_y[ya], index_chess_x[xa])
-    coord_final = Coord(index_chess_y[yb], index_chess_x[xb])
-
-    return coord_initial, coord_final
-    
-
 if __name__ == "__main__":
     # Ejemplo de uso
     fen_inicial = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"  # FEN de una posición inicial estándar
     #mejor_jugada = get_mov_uci_chess_bot(fen_inicial)
 
     uci = get_mov_uci_chess_bot(fen_inicial)
-    coords = coords_chess_to_format_uci(uci)
     print(uci)
-    print(coords)

@@ -1,8 +1,7 @@
 from typing import Generic, TypeVar
 
+
 T = TypeVar("T")
-
-
 
 class Observer(Generic[T]):
     __observed: "Observed" = None

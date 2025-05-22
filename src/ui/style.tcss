@@ -1,16 +1,19 @@
 Horizontal{
     align: center middle;
     content-align: center middle;
+    border: solid;
 }
 
 
 Vertical.principal{
     align: center middle;
     width: 56%;  
+    
 }
 Horizontal.principal{
     align: center middle;
     height: 26;
+    border: solid;
 }
 
 .info{
@@ -53,33 +56,8 @@ Horizontal.principal{
 
 
 
-.fichas Static{
-    width: 7;
-    height: 3;  
-    align-vertical: middle; 
-    text-align: center;
-}
 
-.fichas.rojas Static{
-    color: red;
-}
-
-.fichas.azules Static{
-    color: blue;
-}
-
-
-.fichas{
-    width: 14;
-    height: 24;
-    margin-left: 5;
-    margin-right: 5;
-    layout: grid;
-    grid-size: 2 8;
-    background: orange;
-}
-
-GroupBlocks{
+GroupBlock{
     width: 56;
     height: 24;
     layout: grid;
@@ -87,50 +65,7 @@ GroupBlocks{
 }
 
 
-Block{
-    width: 7;
-    height: 3;  
-    align-vertical: middle; 
-}
-
-Block Static{
-    width: 5;
-    height: 1;
-    content-align-horizontal: center;
-}
-
-
-.blanco {
-    background: white;
-}
-
-.negro{
-    background: black;
-}
-
-.moved{
-    background: yellow;
-}
-
-.enemy{
-    background: red;
-    border: solid;
-}
-
-.empty{
-    background: green;
-    border: solid;
-}
-
-/*
-.invalid{
-    background: blue;
-    border: solid;
-}
-*/
-
-
-
+/*Pieces Style */
 .armyBlack{
     color: red;
 }

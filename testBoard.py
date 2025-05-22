@@ -1,73 +1,79 @@
-from src.core.board import Board
-from src.core.pieces import Torre, Peon
+
+class Cycle:
+    def __init__(self, start: int, end: int, index_default: int = 0, reverse: bool = False, increment: int = 1) -> None:
+        self.increment: int = increment
+        self.reverse: bool = reverse
+        self.index_start: int = start
+        self.index_end: int = end
+        self.index_max: int = self.index_end if reverse == False else self.index_start
+        self.index: int = index_default
 
 
-from src.coordinate import Coord
+    def iteration(self) -> None:
+        new_value: int = self.index + self.increment
 
-from rich.console import Console
-from rich.text import Text
+        if self.reverse:
+            if new_value < self.index_start:
+                new_value = self.index_end
 
-console = Console()
+        else:
+            if new_value > self.index_end:
+                new_value = self.index_start
 
-
-texto = Text("ddfdffddf", style="bold red")
-
-
-tablero = Board()
-
-p1 = Peon(1)
-p1.clase = "a"
-p1.console_color = "blue"
-
-p2 = Torre()
-p2.clase = "b"
-p2.console_color = "green"
+        self.index = new_value
 
 
+class Alien:
 
-tablero.set_ficha(p1, Coord(4, 4))
-tablero.set_ficha(p2, Coord(5, 2))
+    def __init__(self, value_initial: int = 8) -> None:
+        self.life_cycle = Cycle(0, 6, value_initial, True, -1)
 
-p1.spread_influence(tablero)
-p2.spread_influence(tablero)
+    def growl(self) -> None:
+        self.life_cycle.iteration()
 
-space = tablero.get_ficha(Coord(5, 4))
-
-console.print(tablero.view)
-
-'''
-print(p1)
-print(p2)
-
-print("+++++++++++++++++++++++++++++++++++++++++++++++")
-
-p1.make_mov(space, tablero)
-
-print(tablero)
-print(p1)
-print(str(p2))
-'''
+    def reproduced(self) -> bool:
+        return self.value == 0
+    
+    @property
+    def value(self) -> int:
+        return self.life_cycle.index
 
 
+class Poblacion:
+
+    def __init__(self, *initil_aliens: Alien) -> None:
+        self.poblacion: list[Alien] = list(initil_aliens)
+        self.next_generation: list[Alien] = []
+
+    
+    def iteration(self) -> None:
+        poblacion_analize: list[Alien] = self.poblacion.copy()
+        self.poblacion += self.next_generation
+        self.next_generation.clear()
+
+        for alien in poblacion_analize:
+            alien.growl()
+
+            if alien.reproduced():
+                self.add_alien()
 
 
-'''
-def max_value_off_string(data: str) -> int:
-    max_value: int = 0
-    len_data: int = len(data)
+    def add_alien(self) -> None:
+        self.next_generation.append(Alien())
 
-    for index in range(len_data):
-        n_count_left: int = data.count("0", 0, index)
-        n_count_right: int = data.count("1", index, len_data)
+    def get_data_poblacion(self) -> list[int]:
+        return [alien.value for alien in self.poblacion]
+    
 
-        value_actual: int = n_count_left + n_count_right
-        
-        max_value = max(max_value, value_actual)
-
-    return max_value
+entrada: list[int] = [3, 4, 3, 1, 2]
+aliens: list[Alien] = [Alien(value) for value in entrada]
+n_dias: int = 81
 
 
-entrada: str = "011101"
+poblacion = Poblacion(*aliens)
 
-print(max_value_off_string(entrada))'''
 
+for n_dia in range(n_dias):
+    data = poblacion.get_data_poblacion()
+    print(f"Dia {n_dia}: N Aliens: {len(data)} Poblacion: {", ".join([str(value) for value in data])}")
+    poblacion.iteration()
