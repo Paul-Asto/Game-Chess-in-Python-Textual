@@ -64,7 +64,7 @@ python main.py
 
 - La vista de la aplicacion deende del tamaño de fuente, asi que puedes modifirarla usando Ctrl + y Ctrl - 
 
-<video src="https://raw.githubusercontent.com/Paul-Asto/Game-Chess-in-Python-Textual/assets/example_game.mp4" controls="controls" width="900px">
+<img src="assets/example_game.gif" width="900px">
 
 
 ## Ejemplo de manejo de la logica en codigo 
