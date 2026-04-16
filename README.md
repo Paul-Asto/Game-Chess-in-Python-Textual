@@ -70,7 +70,7 @@ python main.py
 ## Ejemplo de manejo de la logica en codigo 
 
 
-```
+``` py
 
 # Crear la clase ChessGame con el Builder, esta clase   maneja la logica del juego de ajedrez
 from src.core.game import ChessGame
