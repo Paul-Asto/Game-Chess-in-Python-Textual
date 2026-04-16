@@ -1,13 +1,13 @@
-from typing import Generic, TYPE_CHECKING
-from src.core.types_chess import T_Square
+from typing import Optional
+
+from src.core.types import ArmyClass
+from src.core.square import Square
 from src.core.coordinate import Coord
 from src.core.piece import PieceChess
 
-if TYPE_CHECKING:
-    from src.core.square import Square
-    
 
-class Board(Generic[T_Square]):
+
+class Board:
     
     '''
     Class Board:
@@ -56,32 +56,87 @@ class Board(Generic[T_Square]):
     - content (tuple[tuple[Scuare]] ):    Contenido de la matriz de "Scuare" \n
     '''
     
-    
-    
-    def __init__(self, size_y: int, size_x: int, type_square: type[T_Square]) -> None:
-        '''
-        Al inicializar se llama a la funcion "refresh_content" para guardar en el atributo content
-        la matriz de "Scuare"
-        '''
-        self.type_square: type[T_Square] = type_square
+    def __init__(self, size_y: int, size_x: int) -> None:
+        self.__size_y: int = size_y
+        self.__size_x: int = size_x
         
-        self.size_y: int = size_y
-        self.size_x: int = size_x
-        
-        self.content: tuple[tuple[T_Square, ...], ...] = tuple([
+        self.__content: tuple[tuple[Square, ...], ...] = tuple([
                 tuple([
-                    self.type_square(Coord(y, x)) 
+                    Square(Coord(y, x), self) 
                     for x in range(self.size_x)
                 ])
                 for y in range(self.size_y)
             ])
     
     
-    def reset_content(self) -> None:
-        for column in self.content:
+    @property
+    def size_y(self) -> int:
+        '''
+        Propiedad que devuelve el tamaño del tablero en la coordenada y
+        '''
+        return self.__size_y
+    
+    @property
+    def size_x(self) -> int:
+        '''
+        Propiedad que devuelve el tamaño del tablero en la coordenada x
+        '''
+        return self.__size_x
+    
+    
+    @property
+    def content(self) -> tuple[tuple[Square, ...], ...] :
+        '''
+        Propiedad que devuelve el contenido en matriz de todas las casillas
+        '''
+        return self.__content
+    
+    
+    @property
+    def notation_forsyth_edwards(self) -> str:
+        '''
+        Propiedad que devuelve la notacion FEN que representa 
+        la posicion de las piezas en el tablero
+        '''
+        fen_board: str = ""
+        
+        for column in self.__content:
+            n_emptys: int = 0
+            
+            for scuare in column:
+                piece: PieceChess | None = scuare.piece
+                
+                if piece is None:
+                    n_emptys += 1
+                    continue
+                
+                if n_emptys != 0:
+                    fen_board += str(n_emptys)
+                    n_emptys = 0
+                
+                piece_fen: str = \
+                    piece.character_fen.value.upper() \
+                    if piece.clase == ArmyClass.WHITE.value else \
+                    piece.character_fen.value.lower()
+                
+                fen_board += piece_fen
+            
+            if n_emptys != 0:
+                fen_board += str(n_emptys)
+            
+            fen_board += "/"
+        
+        return fen_board[: -1]
+    
+    
+    def clear_content(self) -> None:
+        '''
+        Funcion que limpia todas las casillas de piezas e influencias de movimientos
+        '''
+        for column in self.__content:
             for square in column:
-                square.reset(self)
-
+                square.delete_piece()
+    
     
     def is_valid_coord(self, coord: Coord) -> bool:
         '''
@@ -96,7 +151,7 @@ class Board(Generic[T_Square]):
     
     
     # Funcions gets
-    def get_ficha(self, coord: Coord) -> PieceChess | None:
+    def get_piece(self, coord: Coord) -> PieceChess | None:
         '''
         Retorna la ficha dentro del "Scuare" en la posicion de la coordenada pasada como parametro,
         primero verifica si es una coordenada valida usando la funcion "is_valid_coord".
@@ -104,10 +159,15 @@ class Board(Generic[T_Square]):
         Si es una coordenada valida retorna la ficha del "scuare" de lo contrario retorna None
         '''
         
-        return self.get_scuare(coord).piece if self.is_valid_coord(coord) else None
+        square: Optional["Square"] = self.get_square(coord)
+        
+        if square is None:
+            return None
+        
+        return square.piece 
     
     
-    def get_scuare(self, coord: Coord) -> T_Square | None:
+    def get_square(self, coord: Coord) -> Square | None:
         '''
         Retorna el "Scuare" en la posicion de la coordenada pasada como parametro,
         primero verifica si es una coordenada valida usando la funcion "is_valid_coord".
@@ -115,22 +175,25 @@ class Board(Generic[T_Square]):
         Si es una coordenada valida retorna el "scuare" de lo contrario retorna None
         '''
         
-        return self.content[coord.y][coord.x] if self.is_valid_coord(coord) else None
+        return self.__content[coord.y][coord.x] if self.is_valid_coord(coord) else None
     
     
     # Funcions set Fichas
-    def set_ficha(self, ficha: PieceChess, coord: Coord) -> None:
+    def set_piece(self, piece: PieceChess, coord: Coord) -> None:
         '''
         Setea la ficha pasada como parametro en el "Scuare" 
         de la posicion de la coordenada pasada como parametro
         '''
         
-        square = self.get_scuare(coord)
-        square.piece = ficha
-        ficha.square = square
+        square: Optional["Square"] = self.get_square(coord)
+        
+        if square is None:
+            raise Exception("Fallo al setear Fichas al Tablero")
+        
+        square.receive_piece(piece)
     
     
-    def set_fichas(self, fichas: list[tuple[Coord, PieceChess]]) -> None:
+    def set_pieces(self, pieces: list[tuple[Coord, PieceChess]]) -> None:
         '''
         Setea varias fichas en varios Scuares
         
@@ -138,6 +201,23 @@ class Board(Generic[T_Square]):
         un seteo por cada uno de los datos de la lista usando la funcion "set_ficha"
         '''
         
-        for coord, ficha in fichas:
-            self.set_ficha(ficha, coord)
-    
+        for coord, ficha in pieces:
+            self.set_piece(ficha, coord)
+
+
+    def get_movs_of_dead_pieces(self) -> dict[str, list[tuple[int, int]]]:
+        movs: dict[str, list[tuple[int, int]]] = {}
+        for column in self.content:
+            for square in column:
+                for mov in square.movs_on_prowl:
+                    piece = mov.piece
+                    army = piece.army
+                    if piece in army.pieces_in_cementery:
+                        if movs.get(f"{piece.id.value} {piece.clase}") is None:
+                            movs[f"{piece.id.value} {piece.clase}"] = [square.coord.value]
+                        
+                        else:
+                            movs[f"{piece.id.value} {piece.clase}"].append(square.coord.value)
+
+        return movs
+

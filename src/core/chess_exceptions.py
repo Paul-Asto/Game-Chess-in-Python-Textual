@@ -1,4 +1,3 @@
-
 class UCI_SintaxisError(Exception):
 
     def __init__(self):

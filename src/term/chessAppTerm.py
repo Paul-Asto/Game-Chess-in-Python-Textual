@@ -7,17 +7,16 @@ from rich.layout import Layout
 from rich.panel import Panel
 
 from src.term.term_view_components import (
-    get_view_term_board,
-    get_view_term_piece, 
+    get_view_term_board, 
     get_view_term_square,
 )
-from src.core.format_uci import FormatUCI, UCI_SintaxisError
+from src.core.protocol_uci import FormatUCI, UCI_SintaxisError
 from src.core.chess_exceptions import IlegalMovChessError
 from src.utilities_stockfish import get_mov_uci_chess_bot
 
 
 if TYPE_CHECKING:
-    from src.core.chessGame import ChessGame
+    from src.core.game import ChessGame
 
 
 
@@ -28,7 +27,7 @@ class ChessAppTerm:
         self.game: "ChessGame" = game
         self.console: Console = Console(height= 30)
         
-        self.user_turn: str = self.game.army_white.id
+        self.user_turn: str = self.game.army_white.clase
         
         self.panel_console: Panel = Panel("", title= "Consola")
         self.panel_info_general: Panel = Panel("", title= "Informacion")
@@ -56,11 +55,10 @@ class ChessAppTerm:
     
     
     @property
-    def view_info(self) -> Text:
-        pass
+    def view_info(self) -> Text: ...
     
     
-    def run(self):
+    def run(self) -> None:
         self.running = True
         self.game.init()
         
@@ -79,7 +77,7 @@ class ChessAppTerm:
             self.console.clear()
     
     
-    def user_action(self):
+    def user_action(self) -> None:
         user_input: str = self.console.input("/: ")
         
         try:
@@ -96,7 +94,7 @@ class ChessAppTerm:
             self.panel_console.renderable = "Movimiento realizado correctamente"
     
     
-    def computer_action(self):
+    def computer_action(self) -> None:
         sleep(0.7)
         
         computer_input: str = get_mov_uci_chess_bot(self.game.notation_forsyth_edwards)
@@ -104,12 +102,12 @@ class ChessAppTerm:
         self.game.make_mov(uci_input)
     
     
-    def update_view(self):
+    def update_view(self) -> None:
         self.panel_board_chess.renderable = get_view_term_board(self.game.board)
         self.panel_info_objects.renderable = get_view_term_square(self.game.board.content[2][0])
         
         
-        self.main_layout["info_general"].update(self.panel_info_general)
+        self.main_layout["info_general"].update(renderable=self.panel_info_general)
         self.main_layout["console"].update(self.panel_console)
         self.main_layout["board_chess"].update(self.panel_board_chess)
         self.main_layout["info_objects"].update(self.panel_info_objects)

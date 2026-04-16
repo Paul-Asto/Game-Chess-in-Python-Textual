@@ -24,7 +24,7 @@ Horizontal.principal{
 .content_data{
     padding-left: 5;
     padding-right: 5;
-    height: 50;
+    height: 25;
     width: 45;
 }
 
@@ -66,10 +66,10 @@ GroupBlock{
 
 
 /*Pieces Style */
-.armyBlack{
+.army_black{
     color: red;
 }
 
-.armyWhite{
+.army_white{
     color: blue;
 }
