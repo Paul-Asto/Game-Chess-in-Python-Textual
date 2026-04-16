@@ -44,7 +44,7 @@ textual
 ```
 
 ## Descargar el motor de ajedrez de stockfish para obtener los movimientos enemigos
-- Navega a la pagina https://stockfishchess.org/download/ par descargar el codigo fuente y el motor de ajedrez de stokfish
+- Navega a la pagina https://stockfishchess.org/download/ para descargar el codigo fuente y el motor de ajedrez de stokfish
 - Descomprime el archivo en la ruta principal del proyecto
 
  <img src="assets/ruta_stockfish.png" width="300px">
@@ -64,7 +64,7 @@ python main.py
 
 - La vista de la aplicacion deende del tamaño de fuente, asi que puedes modifirarla usando Ctrl + y Ctrl - 
 
-<video src="assets/example_game.mp4" controls="controls" width="1000px">
+<video src="assets/example_game.mp4" controls="controls" width="900px">
 
 ## Ejemplo de manejo de la logica en codigo 
 
