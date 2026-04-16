@@ -1,76 +1,13 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+
+from src.core.objetives_store import ObjetivesStore
 
 if TYPE_CHECKING:
+    from src.core.types import ObjetiveChess
     from src.core.piece import PieceChess
     from src.core.coordinate import Coord
-    from src.core.mov_piece import MovPiece
+    from src.core.movs.piece_mov import PieceMov
     from src.core.board import Board
-
-
-
-class AdminObjetives:
-    
-    def __init__(self) -> None:
-        self.store_data: dict["MovPiece", dict["Coord", str]] = {}
-    
-    
-    def set_movs(self, *movs_piece: "MovPiece") -> None:
-        self.store_data.clear()
-        
-        for mov in movs_piece:
-            self.store_data[mov] = {}
-    
-    
-    def get_coords_off_mov(self, mov: "MovPiece") -> list["Coord"]:
-        return list(self.store_data[mov].keys())
-    
-    
-    def get_coords(self) -> list["Coord"]:
-        result: list["Coord"] = []
-        
-        for data in self.store_data.values():
-            result += data.keys()
-        
-        return result
-    
-    
-    def get_data_off_mov(self, mov: "MovPiece") -> list[tuple["Coord", str]]:
-        return list(self.store_data[mov].items())
-    
-    
-    def get_data(self) -> list[tuple["Coord", str]]:
-        result: list[tuple[tuple, str]] = []
-        
-        for data in self.store_data.values():
-            result += data.items()
-        
-        return result
-    
-    
-    def add_coord_off_mov(self, mov: "MovPiece", coord: "Coord", value: str) -> None:
-        self.store_data[mov][coord] = value
-    
-    
-    def clear_store_off_mov(self, mov: "MovPiece") -> None:
-        self.store_data[mov].clear()
-    
-    
-    def coord_in_store(self, coord: "Coord", value: str) -> bool:
-        for mov in self.store_data.keys():
-            if self.coord_in_store_off_mov(mov, coord, value):
-                return True
-        
-        return False
-    
-    
-    def coord_in_store_off_mov(self, mov: "MovPiece", coord: "Coord", value: str) -> bool:
-        input: tuple = (coord, value)
-        
-        for data in self.get_data_off_mov(mov):
-            if  data == input:
-                return True
-        
-        return False
 
 
 
@@ -86,17 +23,17 @@ class Square:
     |__________________|  \n
     
     > La clase Scuare representa una casilla del tablero,  \n
-    en el Board hay en total 64 (8 x 8) clases Scuare,  \n
+    en el Board hay en total 64 (8 x 8) clases Square,  \n
     estas estan hechas para quedarse siempre en su posicion en la matriz.  \n
     
-    > Las clases scuare contienen siempre una ficha o un empty,  \n
+    > Las clases square contienen siempre una ficha o un None,  \n
     esta ficha puede ser reemplazada por otra muchas veces,   \n
     al obtener una nueva ficha la ficha tambien guarda   \n
-    la referencia del scuare en su atributo scuare  \n
+    la referencia del square en su atributo square  \n
     
     > La lista de movs_on_prowl contiene los movimientos   \n
-    de fichas que tienen como objetivo este scuare, esto   \n
-    quiere decir que estas fichas tienen la capacidad de trasladarse a este scuare.  \n
+    de fichas que tienen como objetivo este square, esto   \n
+    quiere decir que estas fichas tienen la capacidad de trasladarse a este square.  \n
     
     > Los movPieces son almacenados como llaves con valor None, 
     estos se diferencian entre si con su atributo value que es una tupla 
@@ -111,121 +48,230 @@ class Square:
     
     - Atributos:  \n
     - coord ("Coord"):                              coordenada  inmutable  \n
-    - ficha (EntityChess)                         ficha contenida actualmente en el scuare, el scuare puede cambiar de ficha  \n
-    - movs_on_prowl (dict[""MovPiece"", None])        lista de movimientos de fichas que tienen como objetivo este Scuare  \n
+    - piece (PieceyChess)                         ficha contenida actualmente en el square, el square puede cambiar de ficha  \n
+    - movs_on_prowl (dict[""MovPiece"", None])        lista de movimientos de fichas que tienen como objetivo este Square  \n
     '''
     
-    def __init__(self, coord: "Coord") -> None      :
-        self.coord: "Coord" = coord
-        self.sealed_piece: "PieceChess" = None
+    def __init__(self, coord: "Coord", board: "Board") -> None:
+        self.__board: "Board" = board
+        self.__coord: "Coord" = coord
+        self.__sealed_piece: Optional["PieceChess"] = None
         
-        self.admin_objetives: AdminObjetives = AdminObjetives()
-        self.__movs_on_prowl: dict["MovPiece", None] = {}
+        self.__admin_objetives: ObjetivesStore = ObjetivesStore() 
+        self.__movs_on_prowl: dict["PieceMov", None] = {}
     
     
-    # propiedad Ficha
+    # propiedad Piece
     @property
-    def piece(self) -> "PieceChess": 
-        return self.sealed_piece
+    def piece(self) -> Optional["PieceChess"]: 
+        '''
+        Atributo que hace referencia a la ficha que contiene la casilla
+        La ficha contenida en la casilla puede cambiar
+        '''
+        return self.__sealed_piece
     
     @piece.setter
-    def piece(self, value: "PieceChess") -> None: 
-        self.sealed_piece = value
-
+    def piece(self, value: Optional["PieceChess"]) -> None: 
+        self.__sealed_piece = value
+    
+    
+    #Propiedad Coord
+    @property
+    def coord(self) ->" Coord":
+        '''
+        Atributo que representa la coordenada de la casilla en el tablero 
+        '''
+        return self.__coord
+    
+    
+    # Propiedad Board
+    @property
+    def board(self) -> "Board":
+        '''
+        Atributo que representa el tablero en el que se encuentra la casilla
+        '''
+        return self.__board
+    
+    
+    #  Propiedad AdminOdjetives
+    @property
+    def admin_objetives(self) -> ObjetivesStore:
+        '''
+        Atributo que representa la clase que administra el registro de las coordenadas objetivos
+        de la ficha que contiene la casilla
+        '''
+        return self.__admin_objetives
+    
     
     # Propiedad movs_prowl
     @property
-    def movs_on_prowl(self) -> list["MovPiece"]:
+    def movs_on_prowl(self) -> list["PieceMov"]:
+        '''
+        Atributo que contiene la lista de todos los movimientos de otras fichas 
+        que tienen como objetivo a esta casilla
+        '''
         return list(self.__movs_on_prowl.keys())
     
-    def reset(self, board: "Board"):
-        self.clear_influence(board)
-        self.piece = None
+    
+    def delete_piece(self) -> None:
+        '''
+        Funcion que elimina de manera segura los datos de influencia que ejerce la ficha 
+        de esta casilla, ademas de eliminarla
+        '''
+        self.clear_influence()
+        self.pop_piece()
     
     
-    def trade_piece(self, square: "Square") -> None:
-        piece_start = self.piece
+    def pop_piece(self) -> Optional["PieceChess"]:
+        '''
+        Funcion que elimina las referencias que enlazan a una ficha y una casilla, ademas de retornar la ficha retirada
+        '''
+        piece: Optional["PieceChess"] = self.piece
+        
+        if not piece is None:
+            piece.square = None
         
         self.piece = None
         
-        square.piece = piece_start
-        piece_start.square = square
+        return piece
     
     
-    def add_mov_prowl(self, mov: "MovPiece") -> None: 
+    def receive_piece(self, piece: "PieceChess") -> None:
+        '''
+        Funcion que crea un enlace entre la ficha y la casilla, ademas de configurar el administrador de objetivoa
+        '''
+        self.pop_piece()
+        self.piece = piece
+        piece.square = self
+        self.admin_objetives.set_movs(*self.piece.movs)
+    
+    
+    def deliver_piece(self, other: "Square") -> None:
+        '''
+        Funcion que envia una ficha a la casilla pasada como parametro, eliminando primero la influencia de ambas fichas
+        para luego reiniciar la influencia en la nueva posicion
+        '''
+        self.clear_influence()
+        other.clear_influence()
+        
+        piece: Optional["PieceChess"] = self.pop_piece()
+        
+        if not piece is None:
+            other.receive_piece(piece)
+        
+        self.update_influence()
+        other.update_influence()
+    
+    
+    def add_mov_prowl(self, mov: "PieceMov") -> None: 
         '''
         Añade una clase ""MovPiece"" al diccionario movs_on_prowl
         '''
         self.__movs_on_prowl[mov] = None
     
     
-    def deleted_mov_prowl(self, mov: "MovPiece")-> None: 
+    def deleted_mov_prowl(self, mov: "PieceMov")-> None: 
         '''
         Elimina una clase ""MovPiece"" al diccionario movs_on_prowl
         '''
         self.__movs_on_prowl.pop(mov)
     
     
-    def is_attacked(self, clase: str = None ) -> tuple[bool, "MovPiece"]:
+    def is_attacked(self, substitute_clase: Optional[str] = None , clase_enemy: Optional[str] = None ) -> Optional["PieceMov"]:
         '''
-        Devuelve True si el scuare esta siendo atacado por alguna ficha
-        que tenga diferente clase que la clase de la ficha del scuare y 
-        si el movimiento es ofensivo
+        - Devuelve True si el square esta siendo atacado por alguna ficha que tenga diferente clase que la clase de la ficha del square
+        - Opcionalmente se puede definir una clase enemiga en especifica 
+        - Opcionalmente se puede definir una clase susttuta en caso la casilla no tenga una pieza con l cual comparar clases
+        - Si la casilla no tiene ficha entonces no sera requerido validar la clase enemiga
+        - Solo se tomara en cuenta los movimientos ofensivos
+        - En caso no haya movimientos enemigos que cumplan estas condiciones retornara None
         '''
         
-        clase_attacked: str
+        if  not self.piece is None and self.piece.clase == clase_enemy or\
+            not substitute_clase is None and substitute_clase == clase_enemy:
+            raise Exception("Error de busqueda: la clase enemiga pasado como parametro es la misma que de la pieza en la casilla")
         
-        if clase == None:
-            clase_attacked = self.piece.clase
+        movs_offensives: list["PieceMov"] = list(filter(
+            lambda mov: mov.is_offensive, 
+            self.movs_on_prowl
+        ))
         
-        else:
-            clase_attacked = clase
+        if not clase_enemy is None:
+            movs_offensives = list(filter(
+                lambda mov: mov.piece.clase == clase_enemy,
+                movs_offensives
+            ))
         
-        for mov in self.movs_on_prowl:
-            if clase_attacked == mov.ficha.clase:
-                continue
-            
-            if mov.is_offensive:
-                return (True, mov)
-        
-        return (False, None)
-    
-    
-    def clear_influence(self, board: "Board") -> None:
-        if self.piece == None:
-            return
-        
-        self.piece.clear_influence(board)
-    
-    
-    def spread_influence(self, board: "Board") -> None:
-        if self.piece == None:
-            return
-        
-        self.piece.spread_influence(board)
-    
-    
-    def update_presence(self, board: "Board") -> None:
-        for mov in self.movs_on_prowl.copy():
-            mov.clear_register(board)
-            mov.register(board)
-    
-    
-    def update_influence(self, board: "Board") -> None:
-        self.update_presence(board)
-        self.spread_influence(board)
-    
-    
-    def get_coords_objetive(self) -> list[tuple["Coord", str]]: 
-        if self.piece == None:
-            return []
-        
-        return self.piece.get_coords_objetive()
-    
-
-    def get_mov_on_prowl_to_piece(self, piece: "PieceChess") -> "MovPiece":
-        for mov in self.movs_on_prowl:
-            if mov.ficha == piece:
-                return mov
+        elif clase_enemy is None:
+            movs_offensives = list(filter(
+                lambda mov:    \
+                    substitute_clase != mov.piece.clase\
+                    if not substitute_clase is None else\
+                    self.piece.clase != mov.piece.clase\
+                    if not self.piece is None else\
+                    True,
                 
-        return None
+                movs_offensives
+            ))
+        
+        if len(movs_offensives) == 0:
+            return None
+        
+        return movs_offensives[0]
+    
+    
+    def clear_influence(self) -> None:
+        '''
+        Funcion que limpia la imfluencia de la pieza que contiene
+        '''
+        if self.piece == None:
+            return
+        
+        self.piece.clear_influence()
+    
+    
+    def spread_influence(self) -> None:
+        '''
+        Funcion que propaga la influencia de la pieza que contiene
+        '''
+        if self.piece == None:
+            return
+        
+        self.piece.spread_influence()
+    
+    
+    def update_presence(self) -> None:
+        '''
+        Actualiza la presencia de los movimientos que recibe la casilla
+        '''
+        for mov in self.movs_on_prowl.copy():
+            mov.clear_register()
+            mov.register()
+    
+    
+    def update_influence(self) -> None:
+        '''
+        Actualiza la presencia y la influencia de la pieza que contiene
+        '''
+        self.update_presence()
+        self.spread_influence()
+    
+    
+    def get_coords_objetive(self) -> list[tuple["Coord", "ObjetiveChess"]]: 
+        '''
+        Funcion que devuelve el registro de las coordenadas objetivos de la pieza que contiene
+        '''
+        return self.piece.get_coords_objetive() if not self.piece is None else []
+    
+    
+    def get_mov_on_prowl_to_piece(self, piece: "PieceChess") -> Optional["PieceMov"]:   
+        '''
+        Funcion que obtiene el movimiento que recibe la casilla de una ficha en especifico
+        en caso en el que la pieza no envie movimiento alguno, retornar None
+        '''
+        movs: list["PieceMov"] = list(filter(
+            lambda mov: mov.piece == piece,
+            self.movs_on_prowl
+        ))
+        
+        return movs[0] if len(movs) > 0 else None

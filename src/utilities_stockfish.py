@@ -7,6 +7,9 @@ def get_mov_uci_chess_bot(fen: str) -> str:
     # Iniciar el proceso de Stockfish
     stockfish = subprocess.Popen([RUTA_STOCKFISH], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     
+    if stockfish.stdin is None or stockfish.stdout is None:
+        return ""
+    
     # Enviar el comando para iniciar el motor en modo UCI
     stockfish.stdin.write("uci\n")
     stockfish.stdin.flush()
@@ -16,7 +19,7 @@ def get_mov_uci_chess_bot(fen: str) -> str:
     stockfish.stdin.flush()
 
     # Pedir la mejor jugada
-    stockfish.stdin.write("go movetime 500\n")  
+    stockfish.stdin.write("go movetime 5\n")  
     stockfish.stdin.flush()
 
     # Leer la respuesta de Stockfish
